@@ -31,7 +31,7 @@ function startSDK(win) {
   sdk.on('Telemetry', handleTelemetryUpdate);
 }
 
-ipcMain.on('replay', (data) => {
+ipcMain.on('replay', (ev, data) => {
   const sdk = iracing.getInstance();
   sdk.playbackControls.searchTs(data.sessionNum, data.sessionTime);
   sdk.camControls.switchToCar(data.carNumber)

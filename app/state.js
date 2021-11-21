@@ -1,3 +1,4 @@
+
 let sessionState = {
   timestamp: 0,
   drivers: [],
@@ -8,6 +9,10 @@ let telemetryState = {
   sessionTime: 0,
   lapPcts: [],
 };
+
+const nullDriver = {
+  incidents: 0,
+}
 
 function handleSessionUpdate(outbox) {
   return function(info) {
@@ -23,9 +28,10 @@ function handleSessionUpdate(outbox) {
       }
     });
 
-    const driversWithNewIncidents = drivers.filter(driver => {
-      const prevState = sessionState.drivers.find(prev => prev.carNumber === driver.carNumber);
-      return prevState && driver.incidents > prevState.incidents;
+    const prevDrivers = _.groupBy(sessionState.drivers, 'carNumber')
+
+    const driversWithNewIncidents = drivers.filter(({ carNumber, incidents }) => {
+      return incidents > (prevDrivers[carNumber] || nullDriver).incidents
     });
 
     driversWithNewIncidents.forEach(driver => outbox.send('incident', { 

@@ -5,6 +5,7 @@
   "devDependencies": {
     "electron": "^16.0.0",
     "electron-rebuild": "^3.2.5",
+    "lodash": "^4.17.21",
     "webpack": "^5.64.2",
     "webpack-cli": "^4.9.1"
   }
