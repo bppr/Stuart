@@ -28,7 +28,7 @@ function startSDK(win) {
 
   sdk.on('Connected', () => console.log('connected to iRacing!'));
   sdk.on('SessionInfo', handleSessionUpdate(win.webContents));
-  sdk.on('Telemetry', handleTelemetryUpdate);
+  sdk.on('Telemetry', handleTelemetryUpdate(win.webContents));
 }
 
 module.exports = { start };

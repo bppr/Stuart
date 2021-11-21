@@ -46,14 +46,16 @@ function handleSessionUpdate(outbox) {
   }
 }
 
-function handleTelemetryUpdate(telemetry) {
-  const newState = {
-    sessionNum: telemetry.values.SessionNum,
-    sessionTime: telemetry.values.SessionTime,
-    lapPcts: telemetry.values.CarIdxLapDistPct
-  };
+function handleTelemetryUpdate(outbox) {
+  return function(telemetry) {
+    const newState = {
+      sessionNum: telemetry.values.SessionNum,
+      sessionTime: telemetry.values.SessionTime,
+      lapPcts: telemetry.values.CarIdxLapDistPct
+    };
 
-  telemetryState = newState;
+    telemetryState = newState;
+  }
 }
 
 module.exports = {
