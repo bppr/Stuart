@@ -5,6 +5,8 @@ import iracing from 'node-irsdk-2021';
 import watch, { notifyOfIncident, notifyOfSessionChanged } from '@app/state';
 import '@app/ipc-inbox';
 
+import StateWatcher  from './statewatcher.js';
+
 export function start() {
   console.log('creating window');
 
@@ -40,4 +42,7 @@ function startSDK(win: BrowserWindow) {
 
   sdk.on('Telemetry', onTelemetryUpdate);
   sdk.on('SessionInfo', onSessionUpdate);
+
+  var sw = new StateWatcher(win.webContents);
+  sw.bindToIRSDK(sdk);
 }
