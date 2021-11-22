@@ -48,8 +48,8 @@ Driver.prototype.updateDriverInfo = function (driverInfo) {
 
     this.driverName = driverInfo.UserName;
     this.teamName = driverInfo.TeamName;
-    this.carNumber = driverInfo.carNumber;
-    this.incidentCount = driverInfo.incidents;
+    this.carNumber = driverInfo.CarNumber;
+    this.incidentCount = driverInfo.CurDriverIncidentCount;
 }
 
 // Updates the telemetry-based properties of this driver
@@ -58,6 +58,7 @@ Driver.prototype.updateTelemetryInfo = function (telemetryInfo) {
     this.lapsCompleted = telemetryInfo.CarIdxLapCompleted[this.carIdx];
     this.trackSurface = telemetryInfo.CarIdxTrackSurface[this.carIdx];
 	this.sessionTime = telemetryInfo.SessionTime;
+	this.sessionNumber = telemetryInfo.SessionNum;
 	this.onPitRoad = telemetryInfo.CarIdxOnPitRoad[this.carIdx];
 }
 
@@ -102,7 +103,7 @@ State.prototype.updateTelemetryInfo = function (telemetry) {
 
 	this.timestamp = timestamp;
 	this.sessionTime = telemetryInfo.SessionTime;
-	this.sessionNum = telemetryInfo.SessionNum;
+	this.sessionNumber = telemetryInfo.SessionNum;
 	this.sessionTick = telemetryInfo.SessionTick;
 	
 	// update all known drivers, creating new ones if this is the first time we've seen them
@@ -120,7 +121,7 @@ State.prototype.updateTelemetryInfo = function (telemetry) {
 			
 			driver.timestamp = this.timestamp;
 			driver.sessionTime = this.sessionTime;
-			driver.sessionNum = this.sessionNum;
+			driver.sessionNumber = this.sessionNumber;
 			driver.sessionTick = this.sessionTick;
         }
     }
@@ -137,11 +138,12 @@ function StateWatcher(outbox) {
 	//
 	// This is where we add new "plugins" for listening to event changes
     this.driverListeners = [
-        //new NewIncidentsListener(outbox),
-		new SectorTimeListener(12),
+        new NewIncidentsListener(outbox),
+		// new SectorTimeListener(12),
 		lapCountListener,
 		new PitStopTimer(),
-		new PitLaneTimer()
+		new PitLaneTimer(),
+		new OffTrackDetector(2)
 		//LogDriverChangesDebug
     ];
 
@@ -180,6 +182,8 @@ StateWatcher.prototype.handleStateUpdate = function(sessionInfo, telemetryInfo) 
 	var oldDrivers = (this.oldState || {}).drivers || {};
 	var newDrivers = this.newState.drivers;
 
+	//console.log(JSON.stringify(this.newState, null," "));
+
 	var uniqueIDx = new Set();
 	Object.keys(oldDrivers).forEach(uniqueIDx.add, uniqueIDx);
 	Object.keys(newDrivers).forEach(uniqueIDx.add, uniqueIDx);
@@ -192,12 +196,6 @@ StateWatcher.prototype.handleStateUpdate = function(sessionInfo, telemetryInfo) 
 		}
 	});
 };
-
-// A car watcher that just logs everything.
-function LogDriverChangesDebug(oldCar, newCar) {
-	console.log("Old: " + JSON.stringify(oldCar));
-	console.log("New: " + JSON.stringify(newCar));
-}
 
 // Attaches this StateWatcher to an IRSDK instance. Only one IRSDK instance can be bound at a time;
 StateWatcher.prototype.bindToIRSDK = function (irsdk) {
@@ -217,28 +215,11 @@ StateWatcher.prototype.unbind = function () {
     }
 }
 
-// Actual event tracking logic starts here
+// Car change listeners
 
-// A driver listener that checks to see if a driver's incident count has increased.
-function NewIncidentsListener(outbox) {
-    return function (oldDriver, newDriver) {
-        if (oldDriver != null && newDriver != null) {
-            if (newDriver.incidentCount > oldDriver.incidentCount) {
-                outbox.send('incident', {
-                    timestamp: newDriver.timestamp,
-                    driver: newDriver.driverName,
-                    sessionNum: newDriver.sessionNum,
-                    sessionTime: newDriver.sessionTime,
-                    lapPct: newDriver.trackPositionPct
-                });
-				
-				console.log("Incident:" + JSON.stringify(newDriver, " "));
-            }
-        }
-    };
-}
+// Abstract/utility listeners
 
-// Timer is the base class for a change listener that times an event from start to finish. Its two parameters are functions in the form of change listeners (oldCar, newCar), and return true if their change has occurred.
+// CarTimer is the base class for a change listener that times an event from start to finish. Its two parameters are functions in the form of change listeners (oldCar, newCar), and return true if their change has occurred.
 // Once the two events have occurred, the timeFunction is called with the car data and number of seconds elapsed between the two events
 // if restart is true, every time the startFunction returns true, the timer will be restarted, Otherwise, the stop function must be called to restart the timer.
 function CarTimer(startFunction, stopFunction, timeFunction, restart = false) {
@@ -250,116 +231,225 @@ function CarTimer(startFunction, stopFunction, timeFunction, restart = false) {
 	
 	return function(oldCar, newCar, sessionTime) {
 		var carIdx = (newCar || oldCar).carIdx;
-			var startTime = startTimesByCarIdx[carIdx];
-			if(startTime == null || restart) {
-				// check start function
-				if(startFunction(oldCar, newCar)) {
-					startTime = sessionTime;
-					startTimesByCarIdx[carIdx] = startTime;
-					//console.log("+");
-				}
+		var startTime = startTimesByCarIdx[carIdx];
+		if(startTime == null || restart) {
+			// check start function
+			if(startFunction(oldCar, newCar)) {
+				startTime = sessionTime;
+				startTimesByCarIdx[carIdx] = startTime;
 			}
-			
-			if(startTime != null && stopFunction(oldCar, newCar)) {
-				var duration = sessionTime - startTime;
-				startTimesByCarIdx[carIdx] = null;
-				timeFunction(duration, newCar || oldCar);
-				//console.log("-");
-			}
+		}
+		
+		if(startTime != null && stopFunction(oldCar, newCar)) {
+			var duration = sessionTime - startTime;
+			startTimesByCarIdx[carIdx] = null;
+			timeFunction(duration, newCar || oldCar);
+		}
 		
 	};
+}
+
+// An event listener that keeps track of the given state function, and triggers the callback method if the statefunction returns true for a car for more than the given number of seconds.
+// - stateFunction: a function that accepts a Driver and returns true when the desired state is present
+// - timeLimitSeconds: the number of seconds that the state function must return true before the callback is called
+// - callback: a callback method that accepts a Driver and is called when the time limit is exceeded
+// - endCallback (nullable): a callback method that accepts a float and a Driver, an is called when the state method stops returning true. This callback is not executed if the time limit wasn't exceeded.
+function CarCountdownTimer(stateFunction, timeLimitSeconds, callback, endCallback) {
+    var startTimesByCarIdx = {};
+    var cbTriggeredByCarIdx = {};
+
+    if (stateFunction == null)
+        throw "stateFunction may not be null";
+    if (callback == null)
+        throw "stopFunction may not be null";
+
+    return function (oldCar, newCar, sessionTime) {
+        if (oldCar == null && newCar == null)
+            throw "oldCar and newCar cannot both be null";
+
+        var carIdx = (newCar || oldCar).carIdx;
+        var startTime = startTimesByCarIdx[carIdx];
+
+        var newState = false;
+        if (newCar != null)
+            newState = stateFunction(newCar);
+
+        if (newState) {
+            if (startTime == null) {
+                startTime = sessionTime;
+                startTimesByCarIdx[carIdx] = sessionTime;
+                cbTriggeredByCarIdx[carIdx] = false;
+            }
+			
+			var duration = sessionTime - startTime;
+			
+			// may need to do somethig here when session changes.
+			
+			if (duration >= timeLimitSeconds && !(cbTriggeredByCarIdx[carIdx])) {
+                cbTriggeredByCarIdx[carIdx] = true;
+                callback(newCar || oldCar);
+            }
+        } else  {
+			if(startTime != null) {
+				if(cbTriggeredByCarIdx[carIdx]) {
+					var duration = sessionTime - startTime;
+					if (endCallback != null) {
+						endCallback(duration, newCar || oldCar);
+					}
+				}
+				startTimesByCarIdx[carIdx] = null;
+			}
+		}
+    };
 }
 
 // Similar to "CarTimer", but times for however long the stateFunction returns true
 function CarStateTimer(stateFunction, timeFunction) {
-		
-	if(stateFunction == null) throw "stateFunction may not be null";
-	if(timeFunction == null) throw "timeFunction may not be null";
-	
-	var risingEdge = function(oldCar, newCar) {
-		return (oldCar == null && newCar != null && stateFunction(newCar)) ||
-			(oldCar != null && !stateFunction(oldCar) && newCar != null && stateFunction(newCar));
-	};
-		
-	var fallingEdge = function(oldCar, newCar) {
-		return (newCar == null && oldCar != null && stateFunction(oldCar)) ||
-			(oldCar != null && stateFunction(oldCar) && newCar != null && !stateFunction(newCar));
-	};
-	
-	return new CarTimer(risingEdge, fallingEdge, timeFunction, false);
+
+    if (stateFunction == null)
+        throw "stateFunction may not be null";
+    if (timeFunction == null)
+        throw "timeFunction may not be null";
+
+    var risingEdge = function (oldCar, newCar) {
+        return (oldCar == null && newCar != null && stateFunction(newCar)) ||
+        (oldCar != null && !stateFunction(oldCar) && newCar != null && stateFunction(newCar));
+    };
+
+    var fallingEdge = function (oldCar, newCar) {
+        return (newCar == null && oldCar != null && stateFunction(oldCar)) ||
+        (oldCar != null && stateFunction(oldCar) && newCar != null && !stateFunction(newCar));
+    };
+
+    return new CarTimer(risingEdge, fallingEdge, timeFunction, false);
 }
 
 // A car listener that listens for changes to a value returned from a getter method, and calls the callback function with the new value if it changes
 function CarPropertyChangeListener(propertyGetter, callback) {
-	if(propertyGetter == null) throw "propertyGetter may not be null";
-	if(callback == null) throw "callback may not be null";
-	
-	return function(oldCar, newCar) {
-		var oldValue = null;
-		if(oldCar != null) oldValue = propertyGetter(oldCar);
-		
-		var newValue = null;
-		if(newCar != null) newValue = propertyGetter(newCar);
-		
-		if(!(oldValue == newValue)) {
-			callback(newValue, newCar, oldValue, oldCar);
-		}
-	}
+    if (propertyGetter == null)
+        throw "propertyGetter may not be null";
+    if (callback == null)
+        throw "callback may not be null";
+
+    return function (oldCar, newCar) {
+        var oldValue = null;
+        if (oldCar != null)
+            oldValue = propertyGetter(oldCar);
+
+        var newValue = null;
+        if (newCar != null)
+            newValue = propertyGetter(newCar);
+
+        if (!(oldValue == newValue)) {
+			//console.log("PC: old:" + oldValue + " new:" + newValue);
+            callback(newValue, newCar, oldValue, oldCar);
+        }
+    }
 }
 
-function isInPitLane(car) {
-	return car.onPitRoad;
-}
+// Concrete, useful listeners
 
-function isInPitBox(car) {
-	return car.trackSurface == "InPitStall";
+// A car listener that logs whenever a car has been off track for more than the given number of seconds. Also logs when the car comes back on the track.
+function OffTrackDetector(minSeconds) {
+
+    var isOffTrack = function (car) {
+		var ot = car.trackSurface == "OffTrack";
+        return ot;
+    }
+
+    return new CarCountdownTimer(isOffTrack, minSeconds,
+        (car) => {
+        console.log("OT: " + car.driverName + " has gone off track.");
+    },
+        (time, car) => {
+        console.log("OT: " + car.driverName + " was off track for " + time.toFixed(2) + " seconds.");
+    });
 }
 
 function PitStopTimer() {
-	return new CarStateTimer(isInPitBox, (time, car) => {
-		console.log(car.driverName + " spent " + time + " seconds in the pit box.");
-	});
+    var isInPitBox = function (car) {
+        return car.trackSurface == "InPitStall";
+    };
+
+    return new CarStateTimer(isInPitBox, (time, car) => {
+        console.log("PT: " + car.driverName + " spent " + time + " seconds in the pit box.");
+    });
 }
 
 function PitLaneTimer() {
-	return new CarStateTimer(isInPitLane, (time, car) => {
-		console.log(car.driverName + " spent " + time + " seconds in pit lane.");
-	});
+    var isInPitLane = function (car) {
+        return car.onPitRoad;
+    }
+
+    return new CarStateTimer(isInPitLane, (time, car) => {
+        console.log("PT: " + car.driverName + " spent " + time + " seconds in pit lane.");
+    });
 }
 
-
+// listeners can also be bare methods
 function lapCountListener(oldCar, newCar) {
-	if(oldCar != null && newCar != null) {
-		if(oldCar.lapsCompleted != newCar.lapsCompleted) {
-			console.log("LC: " + newCar.driverName + " finished lap " + newCar.lapsCompleted);
-		}
-	}
+    if (oldCar != null && newCar != null) {
+        if (oldCar.lapsCompleted != newCar.lapsCompleted) {
+            console.log("LC: " + newCar.driverName + " finished lap " + newCar.lapsCompleted + ".");
+        }
+    }
 }
 
 // A car listener that logs to the the time spent in each sector when a car leaves a sector. Track sectors are evenly spaced.
 function SectorTimeListener(numSectors) {
-	
-	if(numSectors < 1) numSectors = 1;
-	
-	var sectorListeners = [];
-	var sectorSize = 1/numSectors;
-	var sectorNumber = 1;
-	for(var sector = 0.0; sector < 1.0; sector += sectorSize) {
-		var carIsInSector = (car) => {
-			return car.trackPositionPct >= sector && car.trackPositionPct < (sector + sectorSize);
-		};
-		
-		sectorListeners.push(new CarStateTimer(carIsInSector, (time, car) => {
-			console.log(car.driverName + " finished sector " + sectorNumber + " in " + time.toFixed(2) + " seconds.");
-		}));
-		sectorNumber++;
-	}
-	
-	return function(oldCar, newCar, sessionTime) {
-		for(var i in sectorListeners) {
-			sectorListeners[i](oldCar, newCar, sessionTime);
-		}
-	};
+
+    if (numSectors < 1)
+        numSectors = 1;
+
+    var sectorListeners = [];
+    var sectorSize = 1 / numSectors;
+    var sectorNumber = 1;
+    for (var sector = 0.0; sector < 1.0; sector += sectorSize) {
+        var carIsInSector = (car) => {
+            return car.trackPositionPct >= sector && car.trackPositionPct < (sector + sectorSize);
+        };
+
+        sectorListeners.push(new CarStateTimer(carIsInSector, (time, car) => {
+                console.log("ST: " + car.driverName + " finished sector " + sectorNumber + " in " + time.toFixed(2) + " seconds.");
+            }));
+        sectorNumber++;
+    }
+
+    return function (oldCar, newCar, sessionTime) {
+        for (var i in sectorListeners) {
+            sectorListeners[i](oldCar, newCar, sessionTime);
+        }
+    };
+}
+
+// A car watcher that just logs everything.
+function LogDriverChangesDebug(oldCar, newCar) {
+    console.log("Old: " + JSON.stringify(oldCar));
+    console.log("New: " + JSON.stringify(newCar));
+}
+
+// A driver listener that checks to see if a driver's incident count has increased.
+function NewIncidentsListener(outbox) {
+    var getIncidents = function (car) {
+        return car.incidentCount;
+    };
+
+    return new CarPropertyChangeListener(getIncidents, (incidents, car, oldIncidents) => {
+        if (oldIncidents < incidents) {
+            console.log("IN: " + car.driverName + " now has " + incidents + " incident points.");
+
+            /*
+            outbox.send('incident', {
+            incidentCount: incidents,
+            timestamp: car.timestamp,
+            driver: car.driverName,
+            sessionNum: car.sessionNum,
+            sessionTime: car.sessionTime,
+            lapPct: car.trackPositionPct
+            });
+             */
+        }
+    });
 }
 
 module.exports = StateWatcher;
