@@ -33,7 +33,7 @@ function handleSessionUpdate(outbox) {
     const prevDrivers = _.groupBy(sessionState.drivers, 'carNumber')
 
     const driversWithNewIncidents = drivers.filter(({ carNumber, incidents }) => {
-      return incidents > (prevDrivers[carNumber] || nullDriver).incidents
+      return incidents > (prevDrivers[carNumber][0] || nullDriver).incidents
     });
 
     driversWithNewIncidents.forEach(driver => outbox.send('incident', { 
