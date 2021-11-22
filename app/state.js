@@ -1,7 +1,7 @@
-var _ = require('lodash');
+const _ = require('lodash');
 
 let sessionState = {
-  timestamp: 0,
+  timestamp: new Date(),
   drivers: [],
 };
 
@@ -9,6 +9,7 @@ let telemetryState = {
   sessionNum: 0,
   sessionTime: 0,
   lapPcts: [],
+  laps: []
 };
 
 const nullDriver = {
@@ -40,7 +41,8 @@ function handleSessionUpdate(outbox) {
       driver,
       sessionNum: telemetryState.sessionNum,
       sessionTime: telemetryState.sessionTime,
-      lapPct: telemetryState.lapPcts[driver.index]
+      lapPct: telemetryState.lapPcts[driver.index],
+      lap: telemetryState.laps[driver.index]
     }));
     
     sessionState = { drivers, timestamp };
@@ -52,7 +54,8 @@ function handleTelemetryUpdate(outbox) {
     const newState = {
       sessionNum: telemetry.values.SessionNum,
       sessionTime: telemetry.values.SessionTime,
-      lapPcts: telemetry.values.CarIdxLapDistPct
+      lapPcts: telemetry.values.CarIdxLapDistPct,
+      laps: telemetryState.values.CarIdxLap
     };
 
     telemetryState = newState;

@@ -1,6 +1,7 @@
 const { BrowserWindow, ipcMain } = require('electron');
 const { join } = require('path');
 const iracing = require('node-irsdk-2021');
+
 const { handleSessionUpdate, handleTelemetryUpdate } = require('./state.js');
 const StateWatcher = require('./statewatcher.js');
 
@@ -36,7 +37,22 @@ function startSDK(win) {
   
   var sw = new StateWatcher(win.webContents);
   sw.bindToIRSDK(sdk);
-  
 }
+
+ipcMain.on('replay', (ev, data) => {
+  const sdk = iracing.getInstance();
+  sdk.playbackControls.searchTs(data.sessionNum, data.sessionTime);
+  sdk.camControls.switchToCar(data.carNumber)
+});
+
+ipcMain.on('focus-camera', (ev, data) => {
+  const sdk = iracing.getInstance();
+  sdk.camControls.switchToCar(data.carNumber);
+});
+
+ipcMain.on('jump-to-time', (ev, data) => {
+  const sdk = iracing.getInstance();
+  sdk.playbackControls.searchTs(data.sessionNum, data.sessionTime);
+});
 
 module.exports = { start };
