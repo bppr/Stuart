@@ -10,7 +10,7 @@ module.exports = {
   mode,
   devtool,
   target: 'electron-renderer',
-  entry: './ui/ui.main.tsx',
+  entry: './ui/main.tsx',
   output: {
     path: root('build'),
     filename: 'ui.bundle.js'

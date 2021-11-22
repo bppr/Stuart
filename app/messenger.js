@@ -10,11 +10,11 @@ contextBridge.exposeInMainWorld(
     replay: (carNumber, sessionNum, sessionTime) => {
       ipcRenderer.send('replay', { carNumber, sessionNum, sessionTime })
     },
-    focusCamera: (data) => {
-      ipcRenderer.send('focus-camera', data);
+    focusCamera: (carNumber) => {
+      ipcRenderer.send('focus-camera', { carNumber });
     },
-    jumpToTime: (data) => {
-      ipcRenderer.send('jump-to-time', data);
+    jumpToTime: (sessionNum, sessionTime) => {
+      ipcRenderer.send('jump-to-time', { sessionNum, sessionTime });
     }
   }
 );

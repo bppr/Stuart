@@ -37,7 +37,6 @@ function startSDK(win) {
   
   var sw = new StateWatcher(win.webContents);
   sw.bindToIRSDK(sdk);
-  
 }
 
 ipcMain.on('replay', (ev, data) => {
