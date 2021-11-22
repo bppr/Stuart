@@ -3,27 +3,27 @@ var _ = require('lodash');
 // An object containing all the properties of a driver that we might care about, retrieved from either the session info or telemetry info
 function Driver(carIdx) {
 
-	this.carIdx = carIdx;
+    this.carIdx = carIdx;
     
-	// Copied from session or telemetry info updates ("global" properties, copied here to be easier to pass around with the "Driver" object")
+    // Copied from session or telemetry info updates ("global" properties, copied here to be easier to pass around with the "Driver" object")
     this.timestamp = null; // the real world time this info was last updated
     this.sessionNumber = -1;
     this.sessionTime = -1; // the session time this driver info was last updated
-	this.sessionTick = -1;
-	
-	// i miss type safety
+    this.sessionTick = -1;
+    
+    // i miss type safety
 
-	// Properties copied from session info
+    // Properties copied from session info
     this.incidentCount = -1;
     this.carNumber = -1;
     this.driverName = null;
     this.teamName = null;
-	
-	// Properties copied from telemetry info
+    
+    // Properties copied from telemetry info
     this.trackPositionPct = null;
     this.lapsCompleted = null;
     this.trackSurface = null; // on track, in pits, etc. Not surface material
-	this.onPitRoad = null;
+    this.onPitRoad = null;
 }
 
 // Returns the *total* race distance completed, in fractional laps
@@ -57,35 +57,35 @@ Driver.prototype.updateTelemetryInfo = function (telemetryInfo) {
     this.trackPositionPct = telemetryInfo.CarIdxLapDistPct[this.carIdx];
     this.lapsCompleted = telemetryInfo.CarIdxLapCompleted[this.carIdx];
     this.trackSurface = telemetryInfo.CarIdxTrackSurface[this.carIdx];
-	this.sessionTime = telemetryInfo.SessionTime;
-	this.sessionNumber = telemetryInfo.SessionNum;
-	this.onPitRoad = telemetryInfo.CarIdxOnPitRoad[this.carIdx];
+    this.sessionTime = telemetryInfo.SessionTime;
+    this.sessionNumber = telemetryInfo.SessionNum;
+    this.onPitRoad = telemetryInfo.CarIdxOnPitRoad[this.carIdx];
 }
 
 function State() {
     // List of Drivers by CarIDx
     this.drivers = {};
-	
-	this.timestamp = null; // the real world time this info was last updated
+    
+    this.timestamp = null; // the real world time this info was last updated
     this.sessionNumber = -1;
     this.sessionTime = -1; // the session time this driver info was last updated
-	this.sessionTick = -1;
+    this.sessionTick = -1;
 }
 
 // Updates the state with properties retrieved from session
 State.prototype.updateSessionInfo = function (session) {
-	
-	// console.log("updateSessionInfo: " + JSON.stringify(session," "));
-	
+    
+    // console.log("updateSessionInfo: " + JSON.stringify(session," "));
+    
     var timestamp = session.timestamp;
     var sessionInfo = session.data;
-	
-	this.timestamp = timestamp;
-	
+    
+    this.timestamp = timestamp;
+    
     for (var i in sessionInfo.DriverInfo.Drivers) {
         var driverInfo = sessionInfo.DriverInfo.Drivers[i];
-		
-		var carIdx = driverInfo.CarIdx;
+        
+        var carIdx = driverInfo.CarIdx;
         var driver = this.drivers[carIdx] || new Driver(carIdx);
         driver.updateDriverInfo(driverInfo);
         driver.timestamp = timestamp;
@@ -96,17 +96,17 @@ State.prototype.updateSessionInfo = function (session) {
 
 // Updates the fields of this State with new telemetry info
 State.prototype.updateTelemetryInfo = function (telemetry) {
-	//console.log("updateTelemetryInfo: " + JSON.stringify(telemetry," "));
-	
+    //console.log("updateTelemetryInfo: " + JSON.stringify(telemetry," "));
+    
     var timestamp = telemetry.timestamp;
     var telemetryInfo = telemetry.values;
 
-	this.timestamp = timestamp;
-	this.sessionTime = telemetryInfo.SessionTime;
-	this.sessionNumber = telemetryInfo.SessionNum;
-	this.sessionTick = telemetryInfo.SessionTick;
-	
-	// update all known drivers, creating new ones if this is the first time we've seen them
+    this.timestamp = timestamp;
+    this.sessionTime = telemetryInfo.SessionTime;
+    this.sessionNumber = telemetryInfo.SessionNum;
+    this.sessionTick = telemetryInfo.SessionTick;
+    
+    // update all known drivers, creating new ones if this is the first time we've seen them
     for (var carIdx in telemetryInfo.CarIdxPosition) {
         // attempt to remove invalid cars
         if (telemetryInfo.CarIdxLap[carIdx] < 0) {
@@ -118,11 +118,11 @@ State.prototype.updateTelemetryInfo = function (telemetry) {
                 this.drivers[carIdx] = driver;
             }
             driver.updateTelemetryInfo(telemetryInfo);
-			
-			driver.timestamp = this.timestamp;
-			driver.sessionTime = this.sessionTime;
-			driver.sessionNumber = this.sessionNumber;
-			driver.sessionTick = this.sessionTick;
+            
+            driver.timestamp = this.timestamp;
+            driver.sessionTime = this.sessionTime;
+            driver.sessionNumber = this.sessionNumber;
+            driver.sessionTick = this.sessionTick;
         }
     }
 }
@@ -133,68 +133,68 @@ function StateWatcher(outbox) {
     this.newState = null;
 
     // An array of callback functions with the method signature: 
-	// function(Driver old, Driver new, float sessionTime)
-	// that will be called when driver info is updated
-	//
-	// This is where we add new "plugins" for listening to event changes
+    // function(Driver old, Driver new, float sessionTime)
+    // that will be called when driver info is updated
+    //
+    // This is where we add new "plugins" for listening to event changes
     this.driverListeners = [
         new NewIncidentsListener(outbox),
-		// new SectorTimeListener(12),
-		lapCountListener,
-		new PitStopTimer(),
-		new PitLaneTimer(),
-		new OffTrackDetector(2)
-		//LogDriverChangesDebug
+        // new SectorTimeListener(12),
+        lapCountListener,
+        new PitStopTimer(),
+        new PitLaneTimer(),
+        new OffTrackDetector(2)
+        //LogDriverChangesDebug
     ];
 
     // session listeners?
 
     // irsdk event handlers, for unbinding;
     this.irsdk = null;
-	var that = this;
-	this.irsdkSessionUpdateCB = function(sessionInfo) {
-		that.handleStateUpdate(sessionInfo, null);
-	}	
-	this.irsdkTelemetryUpdateCB = function(telemetryInfo) {
-		that.handleStateUpdate(null, telemetryInfo);
-	}
+    var that = this;
+    this.irsdkSessionUpdateCB = function(sessionInfo) {
+        that.handleStateUpdate(sessionInfo, null);
+    }   
+    this.irsdkTelemetryUpdateCB = function(telemetryInfo) {
+        that.handleStateUpdate(null, telemetryInfo);
+    }
 }
 
 // Updates the state from new telemetry or session info, informs all driver listeners of the new data.
 // should be private really
 StateWatcher.prototype.handleStateUpdate = function(sessionInfo, telemetryInfo) {
-	if (this.newState == null) {
-		this.newState = new State();
-	} else {
-		this.oldState = this.newState;
-		this.newState = _.cloneDeep(this.oldState || {});
-	}
-	 // TODO this seems to only be called once
-	//console.log(".");
-	
-	if(sessionInfo != null) {
-		this.newState.updateSessionInfo(sessionInfo);
-	}
-	if(telemetryInfo != null) {
-		this.newState.updateTelemetryInfo(telemetryInfo);
-	}
+    if (this.newState == null) {
+        this.newState = new State();
+    } else {
+        this.oldState = this.newState;
+        this.newState = _.cloneDeep(this.oldState || {});
+    }
+     // TODO this seems to only be called once
+    //console.log(".");
+    
+    if(sessionInfo != null) {
+        this.newState.updateSessionInfo(sessionInfo);
+    }
+    if(telemetryInfo != null) {
+        this.newState.updateTelemetryInfo(telemetryInfo);
+    }
 
-	var oldDrivers = (this.oldState || {}).drivers || {};
-	var newDrivers = this.newState.drivers;
+    var oldDrivers = (this.oldState || {}).drivers || {};
+    var newDrivers = this.newState.drivers;
 
-	//console.log(JSON.stringify(this.newState, null," "));
+    //console.log(JSON.stringify(this.newState, null," "));
 
-	var uniqueIDx = new Set();
-	Object.keys(oldDrivers).forEach(uniqueIDx.add, uniqueIDx);
-	Object.keys(newDrivers).forEach(uniqueIDx.add, uniqueIDx);
-	uniqueIDx.forEach((carIdx) => {
-		var oldDriver = oldDrivers[carIdx];
-		var newDriver = newDrivers[carIdx];
-	
-		for (var i in this.driverListeners) {
-			this.driverListeners[i](oldDriver, newDriver, this.newState.sessionTime);
-		}
-	});
+    var uniqueIDx = new Set();
+    Object.keys(oldDrivers).forEach(uniqueIDx.add, uniqueIDx);
+    Object.keys(newDrivers).forEach(uniqueIDx.add, uniqueIDx);
+    uniqueIDx.forEach((carIdx) => {
+        var oldDriver = oldDrivers[carIdx];
+        var newDriver = newDrivers[carIdx];
+    
+        for (var i in this.driverListeners) {
+            this.driverListeners[i](oldDriver, newDriver, this.newState.sessionTime);
+        }
+    });
 };
 
 // Attaches this StateWatcher to an IRSDK instance. Only one IRSDK instance can be bound at a time;
@@ -223,30 +223,30 @@ StateWatcher.prototype.unbind = function () {
 // Once the two events have occurred, the timeFunction is called with the car data and number of seconds elapsed between the two events
 // if restart is true, every time the startFunction returns true, the timer will be restarted, Otherwise, the stop function must be called to restart the timer.
 function CarTimer(startFunction, stopFunction, timeFunction, restart = false) {
-	var startTimesByCarIdx = {};
-	
-	if(startFunction == null) throw "startFunction may not be null";
-	if(stopFunction == null) throw "stopFunction may not be null";
-	if(timeFunction == null) throw "timeFunction may not be null";
-	
-	return function(oldCar, newCar, sessionTime) {
-		var carIdx = (newCar || oldCar).carIdx;
-		var startTime = startTimesByCarIdx[carIdx];
-		if(startTime == null || restart) {
-			// check start function
-			if(startFunction(oldCar, newCar)) {
-				startTime = sessionTime;
-				startTimesByCarIdx[carIdx] = startTime;
-			}
-		}
-		
-		if(startTime != null && stopFunction(oldCar, newCar)) {
-			var duration = sessionTime - startTime;
-			startTimesByCarIdx[carIdx] = null;
-			timeFunction(duration, newCar || oldCar);
-		}
-		
-	};
+    var startTimesByCarIdx = {};
+    
+    if(startFunction == null) throw "startFunction may not be null";
+    if(stopFunction == null) throw "stopFunction may not be null";
+    if(timeFunction == null) throw "timeFunction may not be null";
+    
+    return function(oldCar, newCar, sessionTime) {
+        var carIdx = (newCar || oldCar).carIdx;
+        var startTime = startTimesByCarIdx[carIdx];
+        if(startTime == null || restart) {
+            // check start function
+            if(startFunction(oldCar, newCar)) {
+                startTime = sessionTime;
+                startTimesByCarIdx[carIdx] = startTime;
+            }
+        }
+        
+        if(startTime != null && stopFunction(oldCar, newCar)) {
+            var duration = sessionTime - startTime;
+            startTimesByCarIdx[carIdx] = null;
+            timeFunction(duration, newCar || oldCar);
+        }
+        
+    };
 }
 
 // An event listener that keeps track of the given state function, and triggers the callback method if the statefunction returns true for a car for more than the given number of seconds.
@@ -280,26 +280,26 @@ function CarCountdownTimer(stateFunction, timeLimitSeconds, callback, endCallbac
                 startTimesByCarIdx[carIdx] = sessionTime;
                 cbTriggeredByCarIdx[carIdx] = false;
             }
-			
-			var duration = sessionTime - startTime;
-			
-			// may need to do somethig here when session changes.
-			
-			if (duration >= timeLimitSeconds && !(cbTriggeredByCarIdx[carIdx])) {
+            
+            var duration = sessionTime - startTime;
+            
+            // may need to do somethig here when session changes.
+            
+            if (duration >= timeLimitSeconds && !(cbTriggeredByCarIdx[carIdx])) {
                 cbTriggeredByCarIdx[carIdx] = true;
                 callback(newCar || oldCar);
             }
         } else  {
-			if(startTime != null) {
-				if(cbTriggeredByCarIdx[carIdx]) {
-					var duration = sessionTime - startTime;
-					if (endCallback != null) {
-						endCallback(duration, newCar || oldCar);
-					}
-				}
-				startTimesByCarIdx[carIdx] = null;
-			}
-		}
+            if(startTime != null) {
+                if(cbTriggeredByCarIdx[carIdx]) {
+                    var duration = sessionTime - startTime;
+                    if (endCallback != null) {
+                        endCallback(duration, newCar || oldCar);
+                    }
+                }
+                startTimesByCarIdx[carIdx] = null;
+            }
+        }
     };
 }
 
@@ -341,7 +341,7 @@ function CarPropertyChangeListener(propertyGetter, callback) {
             newValue = propertyGetter(newCar);
 
         if (!(oldValue == newValue)) {
-			//console.log("PC: old:" + oldValue + " new:" + newValue);
+            //console.log("PC: old:" + oldValue + " new:" + newValue);
             callback(newValue, newCar, oldValue, oldCar);
         }
     }
@@ -353,7 +353,7 @@ function CarPropertyChangeListener(propertyGetter, callback) {
 function OffTrackDetector(minSeconds) {
 
     var isOffTrack = function (car) {
-		var ot = car.trackSurface == "OffTrack";
+        var ot = car.trackSurface == "OffTrack";
         return ot;
     }
 
