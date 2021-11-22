@@ -16,6 +16,7 @@ export function App() {
   useEffect(listen, []);
 
   return <div>
+    Hello
     {incidents.map(incident => <Incident incident={incident} />)}
   </div>;
 }

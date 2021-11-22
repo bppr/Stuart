@@ -1,16 +1,14 @@
-export type DriverData = { 
-  index: number
-  name: string
-  team: string
-  carNumber: string
-  incidents: number
-}
-
 export type IncidentData = { 
-  timestamp: Date
   sessionTime: number
   sessionNum: number
-  driver: DriverData
-  lap: number
-  lapPct: number
+  type?: string
+  car: {
+    index: number
+    number: string
+    driverName: string
+    teamName: string
+    incidentCount: number
+    currentLap: number
+    currentLapPct: number
+  }
 }

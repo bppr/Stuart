@@ -1,5 +1,6 @@
+import { IncidentData } from '@common/index';
 import _ from 'lodash';
-import { SessionData, TelemetryData } from './sdk';
+import { SessionData, TelemetryData } from 'node-irsdk-2021';
 
 type Outbox = { send<T>(channel: string, data: T): void }
 
@@ -18,6 +19,8 @@ type CarState = {
   incidentCount: number
   currentLap: number
   currentLapPct: number
+  onPitRoad: boolean
+  trackSurface: string
 }
 
 type AppState = {
@@ -36,10 +39,10 @@ export default function watch(outbox: Outbox, config: Config) {
   }
 
   function setState(newState: AppState, notify: 'notify' | undefined = undefined) {
-    if(notify === 'notify')
+    if(notify)
       config.observers.forEach(obs => obs(prevState, newState, outbox));
 
-    prevState = { ...newState, findCar: lookupBy(newState.cars, 'number') };
+    prevState = { ...newState, findCar: lookup(newState.cars) };
   }
 
   function onTelemetryUpdate({ values }: TelemetryData) {
@@ -83,9 +86,8 @@ export default function watch(outbox: Outbox, config: Config) {
   return [onTelemetryUpdate, onSessionUpdate];
 }
 
-type LookupFn<T> = (key: string) => T | undefined
-function lookupBy<T, K extends keyof T>(list: T[], field: K): LookupFn<T> {
-  const table = _.groupBy(list, field);
+function lookup(list: CarState[]): (key: string) => CarState | undefined {
+  const table = _.groupBy(list, 'number');
   return (key: string) => (table[key] || [])[0]
 }
 
@@ -97,7 +99,11 @@ export function notifyOfIncident(prevState: AppState, newState: AppState, outbox
 
   carStates
     .filter(([prev, current]) => prev && current!.incidentCount > prev.incidentCount)
-    .forEach(([_, car]) => outbox.send('incident', { car, sessionNum, sessionTime }))
+    .forEach(([_prev, current]) => {
+      const { index, number, teamName, driverName, incidentCount, currentLap, currentLapPct } = current!;
+      const car = { index, number, teamName, driverName, incidentCount, currentLap, currentLapPct };
+      outbox.send<IncidentData>('incident', { car, sessionNum, sessionTime, type: 'incident_counter' })
+    })
 }
 
 export function notifyOfSessionChanged(prevState: AppState, newState: AppState, outbox: Outbox) {
