@@ -1,3 +1,4 @@
+var _ = require('lodash');
 
 let sessionState = {
   timestamp: 0,
