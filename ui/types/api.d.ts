@@ -1,5 +1,6 @@
 interface APIBridge {
-  receive(msgName: string, handler: (any) => void)
+  receive(msgName: string, handler: (any) => void);
+  showReplay(carNumber: string, sessionNum: number, sessionTime: number);
 }
 
 interface WindowWithSDK extends Window {

@@ -7,8 +7,8 @@ contextBridge.exposeInMainWorld(
     receive: (channel, func) => {
       ipcRenderer.on(channel, (event, ...args) => func(...args));
     },
-    replay: (data) => {
-      ipcRenderer.send('replay', data)
+    replay: (carNumber, sessionNum, sessionTime) => {
+      ipcRenderer.send('replay', { carNumber, sessionNum, sessionTime })
     },
     focusCamera: (data) => {
       ipcRenderer.send('focus-camera', data);

@@ -1,6 +1,7 @@
 const { BrowserWindow, ipcMain } = require('electron');
 const { join } = require('path');
 const iracing = require('node-irsdk-2021');
+
 const { handleSessionUpdate, handleTelemetryUpdate } = require('./state.js');
 const StateWatcher = require('./statewatcher.js');
 
