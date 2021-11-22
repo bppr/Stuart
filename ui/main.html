@@ -6,12 +6,13 @@
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'">
     <meta http-equiv="X-Content-Security-Policy" content="default-src 'self'; script-src 'self'">
     <title>Stuart</title>
-    <script src="../build/ui.bundle.js"></script>
   </head>
 
   <body>
     <div id="application">
-      <div class="status">Not Connected</div>
     </div>
   </body>
+
+  <!-- this has to be below the body to load once rendered. browsers -->
+  <script src="../build/ui.bundle.js"></script>
 </html>

@@ -31,4 +31,20 @@ function startSDK(win) {
   sdk.on('Telemetry', handleTelemetryUpdate(win.webContents));
 }
 
+ipcMain.on('replay', (ev, data) => {
+  const sdk = iracing.getInstance();
+  sdk.playbackControls.searchTs(data.sessionNum, data.sessionTime);
+  sdk.camControls.switchToCar(data.carNumber)
+});
+
+ipcMain.on('focus-camera', (ev, data) => {
+  const sdk = iracing.getInstance();
+  sdk.camControls.switchToCar(data.carNumber);
+});
+
+ipcMain.on('jump-to-time', (ev, data) => {
+  const sdk = iracing.getInstance();
+  sdk.playbackControls.searchTs(data.sessionNum, data.sessionTime);
+});
+
 module.exports = { start };
