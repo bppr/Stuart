@@ -43,8 +43,8 @@ function startSDK(win: BrowserWindow) {
 
   const watcher = new Watcher(outbox, config);
 
-  sdk.on('Telemetry', watcher.onTelemetryUpdate);
-  sdk.on('SessionInfo', watcher.onSessionUpdate);
+  sdk.on('Telemetry', watcher.onTelemetryUpdate.bind(watcher));
+  sdk.on('SessionInfo', watcher.onSessionUpdate.bind(watcher));
 
   var sw = new StateWatcher(win.webContents);
   sw.bindToIRSDK(sdk);
