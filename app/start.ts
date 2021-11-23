@@ -3,6 +3,7 @@ import { join } from 'path'
 import iracing from 'node-irsdk-2021';
 
 import watch, { NotifyOfIncident, NotifyOfSessionChanged } from '@app/state';
+import { OffTrackTimer } from '@app/watchers/offtrack';
 import '@app/ipc-inbox';
 
 import StateWatcher  from './statewatcher.js';
@@ -36,9 +37,12 @@ function startSDK(win: BrowserWindow) {
 
   sdk.on('Connected', () => console.log('connected to iRacing!'));
   
+  const offTrack2s = new OffTrackTimer(outbox, 10);
+  offTrack2s.setTimeLimit(2.0);
+
   const config = {
     minPitStopTime: 35,
-    observers: [ new NotifyOfIncident(outbox), new NotifyOfSessionChanged(outbox) ]
+    observers: [ new NotifyOfIncident(outbox), new NotifyOfSessionChanged(outbox), offTrack2s ]
   }
 
   const watcher = new Watcher(outbox, config);
@@ -46,6 +50,6 @@ function startSDK(win: BrowserWindow) {
   sdk.on('Telemetry', watcher.onTelemetryUpdate.bind(watcher));
   sdk.on('SessionInfo', watcher.onSessionUpdate.bind(watcher));
 
-  var sw = new StateWatcher(win.webContents);
-  sw.bindToIRSDK(sdk);
+  // var sw = new StateWatcher(win.webContents);
+  // sw.bindToIRSDK(sdk);
 }

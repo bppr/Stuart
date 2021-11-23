@@ -2,9 +2,9 @@ import { IncidentData } from '@common/index';
 import _ from 'lodash';
 import { SessionData, TelemetryData } from 'node-irsdk-2021';
 
-type Outbox = { send<T>(channel: string, data: T): void }
+export type Outbox = { send<T>(channel: string, data: T): void }
 
-interface Observer {
+export interface Observer {
   onUpdate(prevState: AppState, newState: AppState): void
 }
 
@@ -13,7 +13,7 @@ type Config = {
   observers: Observer[]
 }
 
-type CarState = {
+export type CarState = {
   index: number
   number: string
   teamName: string
@@ -25,25 +25,30 @@ type CarState = {
   trackSurface: string
 }
 
-type AppState = {
+export type AppState = {
   sessionNum: number
   sessionTime: number
+  /**
+   * Overall length of the track, in meters
+   */
+  trackLength: number
   cars: CarState[]
   findCar(num: string): CarState | undefined
 }
 
 export default class Watcher {
-  constructor(private outbox: Outbox, private config: Config) {}
+  constructor(private outbox: Outbox, private config: Config) { }
 
   prevState: AppState = {
     sessionNum: 0,
     sessionTime: 0,
+    trackLength: 1000,
     cars: [],
     findCar: (_) => undefined
   }
 
   setState(newState: AppState, notify: 'notify' | undefined = undefined) {
-    if(notify)
+    if (notify)
       this.config.observers.forEach(obs => obs.onUpdate(this.prevState, newState));
 
     this.prevState = { ...newState, findCar: lookup(newState.cars) };
@@ -55,7 +60,7 @@ export default class Watcher {
 
     // use last tick's driver info
     // we can wait to observe any new drivers until after sessionInfo updates
-    const cars = this.prevState.cars.map(d => {      
+    const cars = this.prevState.cars.map(d => {
       const prevCar = this.prevState.findCar(d.number)! // never undefined here
 
       return {
@@ -71,6 +76,22 @@ export default class Watcher {
   }
 
   onSessionUpdate(update: SessionData) {
+    const trackLengthStr = update.data.WeekendInfo.TrackLength;
+    const trackLengthRegex = new RegExp("^(\\d+(\\.\\d+)?) (\\w+)$");
+    const match = trackLengthRegex.exec(trackLengthStr);
+    let trackLength = this.prevState.trackLength;
+    if (match) {
+      trackLength = +(match[1]);
+      let distanceUnit = match[3];
+      if (distanceUnit == "km") {
+        trackLength *= 1000;
+      } else if (distanceUnit = "mi") {
+        trackLength *= 1609.344;
+      } else {
+        // furlongs?
+      }
+    }
+
     const cars = update.data.DriverInfo.Drivers.map(dInfo => {
       const prevCar = this.prevState.findCar(dInfo.CarNumber);
 
@@ -82,9 +103,9 @@ export default class Watcher {
         driverName: dInfo.UserName,
         incidentCount: dInfo.TeamIncidentCount
       }
-    })
+    });
 
-    this.setState({ ...this.prevState, cars })
+    this.setState({ ...this.prevState, trackLength, cars })
   }
 }
 
@@ -94,7 +115,7 @@ function lookup(list: CarState[]): (key: string) => CarState | undefined {
 }
 
 export class NotifyOfIncident implements Observer {
-  constructor(private outbox: Outbox) {}
+  constructor(private outbox: Outbox) { }
 
   onUpdate(prevState: AppState, newState: AppState) {
     const { sessionNum, sessionTime, cars } = newState;
@@ -113,14 +134,14 @@ export class NotifyOfIncident implements Observer {
 }
 
 export class NotifyOfSessionChanged implements Observer {
-  constructor(private outbox: Outbox) {}
+  constructor(private outbox: Outbox) { }
 
   onUpdate(prevState: AppState, newState: AppState) {
-    if(prevState.sessionNum < newState.sessionNum) {
+    if (prevState.sessionNum < newState.sessionNum) {
       // TODO: we can look up the session types here so the UI can be smorter about practice, etc
-      this.outbox.send('session-changed', { 
-        previous: prevState.sessionNum, 
-        current: newState.sessionNum 
+      this.outbox.send('session-changed', {
+        previous: prevState.sessionNum,
+        current: newState.sessionNum
       })
     }
   }

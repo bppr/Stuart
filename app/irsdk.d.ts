@@ -23,6 +23,14 @@ declare module 'node-irsdk-2021' {
           TeamIncidentCount: number
         }[]
       }
+	  WeekendInfo: {
+		TrackName: string
+		TrackLength: string
+		TrackID: number
+		TrackDisplayName: string
+		TrackDisplayShortName: string
+		TrackConfigName: string
+	  }
     }
   }
   
