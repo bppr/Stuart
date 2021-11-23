@@ -2,10 +2,11 @@ import { BrowserWindow } from 'electron'
 import { join } from 'path'
 import iracing from 'node-irsdk-2021';
 
-import watch, { notifyOfIncident, notifyOfSessionChanged } from '@app/state';
+import watch, { NotifyOfIncident, NotifyOfSessionChanged } from '@app/state';
 import '@app/ipc-inbox';
 
 import StateWatcher  from './statewatcher.js';
+import Watcher from '@app/state';
 
 export function start() {
   console.log('creating window');
@@ -31,17 +32,19 @@ function startSDK(win: BrowserWindow) {
     telemetryUpdateInterval: 50
   });
 
+  const outbox = win.webContents;
+
   sdk.on('Connected', () => console.log('connected to iRacing!'));
   
   const config = {
     minPitStopTime: 35,
-    observers: [ notifyOfIncident, notifyOfSessionChanged ]
+    observers: [ new NotifyOfIncident(outbox), new NotifyOfSessionChanged(outbox) ]
   }
 
-  const [onTelemetryUpdate, onSessionUpdate] = watch(win.webContents, config);
+  const watcher = new Watcher(outbox, config);
 
-  sdk.on('Telemetry', onTelemetryUpdate);
-  sdk.on('SessionInfo', onSessionUpdate);
+  sdk.on('Telemetry', watcher.onTelemetryUpdate);
+  sdk.on('SessionInfo', watcher.onSessionUpdate);
 
   var sw = new StateWatcher(win.webContents);
   sw.bindToIRSDK(sdk);
