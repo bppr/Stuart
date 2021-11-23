@@ -10,16 +10,16 @@ function formatPct(lapPct: number) {
 }
 
 export default function Incident(props: { incident: IncidentData }) {
-  const { lap, sessionTime, sessionNum, driver, lapPct } = props.incident;
+  const { car, sessionTime, sessionNum } = props.incident;
   
   const showReplay = (ev: React.MouseEvent) => {
     ev.preventDefault()
-    sdk.showReplay(driver.carNumber, sessionTime, sessionNum)
+    sdk.showReplay(car.number, sessionTime, sessionNum)
   }
 
   return <div className="incident">
-    <h3>{ driver.carNumber } @ Lap { lap } { formatPct(lapPct) }</h3>
-    <h5>{ driver.team } / { driver.name }</h5>
+    <h3>{ car.number } @ Lap { car.currentLap } { formatPct(car.currentLapPct) }</h3>
+    <h5>{ car.teamName } / { car.driverName }</h5>
     <a onClick={ showReplay }>Replay</a>
   </div>
 }
