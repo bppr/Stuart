@@ -1,0 +1,44 @@
+body {
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.incidents {
+  margin: 1em;
+}
+
+.incident {
+  padding: 1em;
+  margin: 1em 0em;
+  border: 1px solid grey;
+}
+
+.incident-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.incident-deets {
+  display: flex;
+  align-items: baseline;
+}
+
+.incident-header h2, h4, h5 {
+  margin-right: 1em;
+  margin-bottom: 0;
+  margin-top: 0.25em;
+}
+
+.incident-count {
+  color: limegreen;
+}
+
+.incident-controls a {
+  opacity: 0.66;
+  margin: 0.33em
+}
+
+.incident-controls a:hover {
+  opacity: 1.0;
+  cursor: pointer;
+}

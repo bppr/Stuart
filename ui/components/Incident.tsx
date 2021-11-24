@@ -1,25 +1,40 @@
 import React from 'react';
 
 import { IncidentData } from '@common/index';
-import sdk from '@ui/sdk';
+import * as sdk from '@ui/sdk';
 
 // turns 0.78658 to 75.66%
-function formatPct(lapPct: number) {
-  const rounded = (lapPct * 100).toLocaleString('en-US', { maximumSignificantDigits: 2 })
+function formatPct(lapPct: number, decimals: number = 2) {
+  const rounded = (lapPct * 100).toLocaleString('en-US', { 
+    maximumSignificantDigits: 2 + decimals 
+  })
+  
   return `${rounded}%`
 }
 
 export default function Incident(props: { incident: IncidentData }) {
-  const { car, sessionTime, sessionNum } = props.incident;
+  const car = props.incident.car;
   
   const showReplay = (ev: React.MouseEvent) => {
     ev.preventDefault()
-    sdk.showReplay(car.number, sessionTime, sessionNum)
+    sdk.replay(props.incident)
   }
 
   return <div className="incident">
-    <h3>{ car.number } @ Lap { car.currentLap } { formatPct(car.currentLapPct) }</h3>
+    <div className="incident-header">
+      <div className="incident-deets">
+        <h2>Car #{ car.number }</h2>
+        <h4 className="incident-count">{ car.incidentCount }x</h4>
+        <h5>Lap { car.currentLap } / { formatPct(car.currentLapPct) }</h5>
+      </div>
+
+      <div className="incident-controls">
+        <a title="Show Replay" onClick={ showReplay }>🎥</a>
+        <a title="Tally Incident">➕</a>
+        <a title="Dismiss Incident">🙈</a>
+      </div>
+    </div>
+
     <h5>{ car.teamName } / { car.driverName }</h5>
-    <a onClick={ showReplay }>Replay</a>
   </div>
 }
