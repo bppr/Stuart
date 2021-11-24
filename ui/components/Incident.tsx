@@ -14,6 +14,11 @@ function formatPct(lapPct: number, decimals: number = 2) {
 
 export default function Incident(props: { incident: IncidentData }) {
   const car = props.incident.car;
+
+  let incidentTypeStr = "";
+  if(props.incident.type) {
+    incidentTypeStr = ": " + props.incident.type;
+  }
   
   const showReplay = (ev: React.MouseEvent) => {
     ev.preventDefault()
@@ -23,7 +28,7 @@ export default function Incident(props: { incident: IncidentData }) {
   return <div className="incident">
     <div className="incident-header">
       <div className="incident-deets">
-        <h2>Car #{ car.number }</h2>
+        <h2>Car #{ car.number }{ incidentTypeStr }</h2>
         <h4 className="incident-count">{ car.incidentCount }x</h4>
         <h5>Lap { car.currentLap } / { formatPct(car.currentLapPct) }</h5>
       </div>
@@ -35,6 +40,6 @@ export default function Incident(props: { incident: IncidentData }) {
       </div>
     </div>
 
-    <h5>{ car.teamName } / { car.driverName }</h5>
+    <h5>Team: { car.teamName }, Driver: { car.driverName }.</h5>
   </div>
 }

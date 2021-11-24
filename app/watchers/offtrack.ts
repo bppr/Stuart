@@ -11,6 +11,9 @@ import { IncidentData } from '@common/index';
  */
 export class OffTrackTimer extends CarTimer {
 	
+	public reportOffTracks: boolean = true;
+	public reportUnsafeRejoins: boolean = true;
+
 	/**
 	 * The distance (in meters) to search forward and backward for other cars
 	 * when a car rejoins the track to flag it as a possibly dangerous rejoin.
@@ -22,7 +25,7 @@ export class OffTrackTimer extends CarTimer {
 	constructor(outbox :Outbox, dangerousRejoinDistance?: number) {
 		super();
 		this.outbox = outbox;
-		this.dangerousRejoinDistance = dangerousRejoinDistance || 25;
+		this.dangerousRejoinDistance = dangerousRejoinDistance || 10;
 	}
 
 	private outbox: Outbox;
@@ -34,7 +37,12 @@ export class OffTrackTimer extends CarTimer {
 	onStateTimeExceeded(car: CarState, time: number, app: AppState): void {
 		console.log("OT: " + car.driverName + " has gone off track.");	
 		const { sessionNum, sessionTime } = app;
-		this.outbox.send<IncidentData>('incident', { car, sessionNum, sessionTime, type: 'off_track' })
+		if(this.reportOffTracks) {
+			// Report the incident from when they actually went off track, not when we declared it an off track
+			let otTime = Math.max(0, sessionTime - this.getTimeLimit());
+
+			this.outbox.send<IncidentData>('incident', { car, sessionNum, sessionTime: otTime, type: 'Off-Track' })
+		}
 	}
 	
 	onStateExited(car: CarState, time: number, timeExceeded: boolean, app: AppState): void {
@@ -67,7 +75,7 @@ export class OffTrackTimer extends CarTimer {
 				
 			const { sessionNum, sessionTime } = app;
 			this.outbox.send<IncidentData>('incident', 
-			{ car, sessionNum, sessionTime, type: 'dangerous_rejoin' });
+			{ car, sessionNum, sessionTime, type: 'Unsafe Rejoin' });
 
 		}
 	}

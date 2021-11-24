@@ -6,7 +6,6 @@ import watch, { NotifyOfIncident, NotifyOfSessionChanged } from '@app/state';
 import { OffTrackTimer } from '@app/watchers/offtrack';
 import '@app/ipc-inbox';
 
-import StateWatcher  from './statewatcher.js';
 import Watcher from '@app/state';
 import { PitBoxTimer } from './watchers/pitstop';
 
@@ -52,7 +51,4 @@ function startSDK(win: BrowserWindow) {
 
   sdk.on('Telemetry', watcher.onTelemetryUpdate.bind(watcher));
   sdk.on('SessionInfo', watcher.onSessionUpdate.bind(watcher));
-
-  // var sw = new StateWatcher(win.webContents);
-  // sw.bindToIRSDK(sdk);
 }
