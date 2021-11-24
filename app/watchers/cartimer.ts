@@ -1,5 +1,6 @@
 import { Observer, AppState, CarState } from '@app/state';
 
+
 /**
  * CarTimer is a base class for implementing state watchers that require 
  * timing the length of certain telemetry states.

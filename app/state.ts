@@ -8,6 +8,14 @@ export interface Observer {
   onUpdate(prevState: AppState, newState: AppState): void
 }
 
+export enum SessionType {
+  Race,
+  Qualifying,
+  Practice,
+  // This doesn't mean "null", as in, "there is no session", but rather "iRacing added a session type we're unaware of".
+  Unknown
+}
+
 type Config = {
   minPitStopTime: number
   observers: Observer[]
@@ -25,15 +33,21 @@ export type CarState = {
   trackSurface: string
 }
 
+export type Session = {
+  type: SessionType;
+}
+
 export type AppState = {
   sessionNum: number
   sessionTime: number
+  sessions: Session[]
   /**
    * Overall length of the track, in meters
    */
   trackLength: number
   cars: CarState[]
   findCar(num: string): CarState | undefined
+  sessionType: SessionType | null
 }
 
 export default class Watcher {
@@ -42,16 +56,20 @@ export default class Watcher {
   prevState: AppState = {
     sessionNum: 0,
     sessionTime: 0,
+    sessions: [],
     trackLength: 1000,
     cars: [],
-    findCar: (_) => undefined
+    findCar: (_) => undefined,
+    sessionType: null
   }
 
   setState(newState: AppState, notify: 'notify' | undefined = undefined) {
     if (notify)
       this.config.observers.forEach(obs => obs.onUpdate(this.prevState, newState));
 
-    this.prevState = { ...newState, findCar: lookup(newState.cars) };
+    this.prevState = { ...newState, 
+      findCar: lookup(newState.cars),
+      sessionType: newState.sessions[newState.sessionNum]?.type };
   }
 
   onTelemetryUpdate({ values }: TelemetryData) {
@@ -79,6 +97,7 @@ export default class Watcher {
     const trackLengthStr = update.data.WeekendInfo.TrackLength;
     const trackLengthRegex = new RegExp("^(\\d+(\\.\\d+)?) (\\w+)$");
     const match = trackLengthRegex.exec(trackLengthStr);
+
     let trackLength = this.prevState.trackLength;
     if (match) {
       trackLength = +(match[1]);
@@ -105,7 +124,25 @@ export default class Watcher {
       }
     });
 
-    this.setState({ ...this.prevState, trackLength, cars })
+    const sessions = update.data.SessionInfo.Sessions.map((session) => {
+      let st = SessionType.Unknown;
+      switch(session.SessionType) {
+        case "Race":
+          st = SessionType.Race;
+          break;
+        case "Qualifying":
+          st = SessionType.Qualifying;
+          break;
+        case "Practice":
+          st = SessionType.Practice;
+          break;
+      }
+      let s: Session = {type: st};
+      return s;
+    });
+
+    this.setState({ ...this.prevState, trackLength, cars, sessions,
+      sessionType: sessions[this.prevState.sessionNum]?.type })
   }
 }
 
