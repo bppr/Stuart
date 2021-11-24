@@ -2,11 +2,10 @@ import { BrowserWindow } from 'electron'
 import { join } from 'path'
 import iracing from 'node-irsdk-2021';
 
-import watch, { NotifyOfIncident, NotifyOfSessionChanged } from '@app/state';
+import Watcher, { NotifyOfIncident, NotifyOfSessionChanged } from '@app/state';
 import '@app/ipc-inbox';
 
 import StateWatcher  from './statewatcher.js';
-import Watcher from '@app/state';
 
 export function start() {
   console.log('creating window');

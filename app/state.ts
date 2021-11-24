@@ -42,10 +42,8 @@ export default class Watcher {
     findCar: (_) => undefined
   }
 
-  setState(newState: AppState, notify: 'notify' | undefined = undefined) {
-    if(notify)
-      this.config.observers.forEach(obs => obs.onUpdate(this.prevState, newState));
-
+  setState(newState: AppState) {
+    this.config.observers.forEach(obs => obs.onUpdate(this.prevState, newState));
     this.prevState = { ...newState, findCar: lookup(newState.cars) };
   }
 
@@ -67,7 +65,7 @@ export default class Watcher {
       }
     })
 
-    this.setState({ ...this.prevState, cars, sessionNum, sessionTime }, 'notify');
+    this.setState({ ...this.prevState, cars, sessionNum, sessionTime });
   }
 
   onSessionUpdate(update: SessionData) {
