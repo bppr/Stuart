@@ -29,19 +29,6 @@ export abstract class CarTimer implements Observer {
 		this.cbTriggeredByCarIdx = new Set();
 	}
 	
-	/**
-	 * Sets the time limit (in seconds) for this timer. Once the car has been in the 
-	 * {@linkplain isCarInTargetState | target state} for this amount of time,
-	 * {@link onStateTimeExceeded} will be called.
-	 *
-	 * @param timeLimit must not be negative
-	 */
-	setTimeLimit(timeLimit: number): void {
-		//assert(timeLimit >= 0);
-	
-		this.timeLimit = timeLimit;
-	}
-	
 	getTimeLimit(): number {
 		return this.timeLimit;
 	}
