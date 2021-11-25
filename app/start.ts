@@ -2,10 +2,12 @@ import { BrowserWindow } from 'electron'
 import { join } from 'path'
 import iracing from 'node-irsdk-2021';
 
-import Watcher, { NotifyOfIncident, NotifyOfSessionChanged } from '@app/state';
+import watch, { NotifyOfIncident, NotifyOfSessionChanged } from '@app/state';
+import { OffTrackTimer } from '@app/watchers/offtrack';
 import '@app/ipc-inbox';
 
-import StateWatcher  from './statewatcher.js';
+import Watcher from '@app/state';
+import { PitBoxTimer } from './watchers/pitstop';
 
 export function start() {
   console.log('creating window');
@@ -35,16 +37,18 @@ function startSDK(win: BrowserWindow) {
 
   sdk.on('Connected', () => console.log('connected to iRacing!'));
   
+  const offTrack2s = new OffTrackTimer(outbox, 10);
+  offTrack2s.setTimeLimit(2.0);
+
+  const pitstop = new PitBoxTimer(30);
+
   const config = {
     minPitStopTime: 35,
-    observers: [ new NotifyOfIncident(outbox), new NotifyOfSessionChanged(outbox) ]
+    observers: [ new NotifyOfIncident(outbox), new NotifyOfSessionChanged(outbox), offTrack2s, pitstop ]
   }
 
   const watcher = new Watcher(outbox, config);
 
   sdk.on('Telemetry', watcher.onTelemetryUpdate.bind(watcher));
   sdk.on('SessionInfo', watcher.onSessionUpdate.bind(watcher));
-
-  var sw = new StateWatcher(win.webContents);
-  sw.bindToIRSDK(sdk);
 }
