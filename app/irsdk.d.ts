@@ -11,17 +11,28 @@ declare module 'node-irsdk-2021' {
     }
   }
 
+  interface SessionDriver {
+    CarIdx: number
+    TeamName: string
+    UserName: string
+    CarNumber: string
+    TeamIncidentCount: number
+  }
+
+  interface SessionData {
+    SessionType: string
+    ResultsFastestLap: {
+      CarIdx: number
+      FastestLap: number
+      FastestTime: number
+    }[]
+  }
+
   interface SessionData  {
     timestamp: Date
     data: {
       DriverInfo: {
-        Drivers: {
-          CarIdx: number
-          TeamName: string
-          UserName: string
-          CarNumber: string
-          TeamIncidentCount: number
-        }[]
+        Drivers: SessionDriver[]
       }
       WeekendInfo: {
         TrackName: string
@@ -32,14 +43,7 @@ declare module 'node-irsdk-2021' {
         TrackConfigName: string
       }
       SessionInfo: {
-        Sessions: {
-          SessionType: string
-          ResultsFastestLap: {
-            CarIdx: number
-            FastestLap: number
-            FastestTime: number
-          }[]
-        }[]
+        Sessions: SessionData[]
       }
     }
   }

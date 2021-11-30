@@ -22,8 +22,8 @@ export class OffTrackTimer extends CarTimer {
 	 */
 	private dangerousRejoinDistance: number;
 	
-	constructor(outbox :Outbox, dangerousRejoinDistance?: number) {
-		super();
+	constructor(outbox: Outbox, dangerousRejoinDistance?: number, timeLimit?: number) {
+		super(timeLimit);
 		this.outbox = outbox;
 		this.dangerousRejoinDistance = dangerousRejoinDistance || 10;
 	}
