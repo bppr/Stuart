@@ -8,6 +8,7 @@ import '@app/ipc-inbox';
 
 import Watcher from '@app/state';
 import { PitBoxTimer } from './watchers/pitstop';
+import { MajorIncidentWatcher } from './watchers/fcy';
 
 export function start() {
   console.log('creating window');
@@ -41,10 +42,15 @@ function startSDK(win: BrowserWindow) {
   offTrack2s.setTimeLimit(2.0);
 
   const pitstop = new PitBoxTimer(30);
+  const fcy = new MajorIncidentWatcher(outbox);
 
   const config = {
     minPitStopTime: 35,
-    observers: [ new NotifyOfIncident(outbox), new NotifyOfSessionChanged(outbox), offTrack2s, pitstop ]
+    observers: [ new NotifyOfIncident(outbox), 
+      new NotifyOfSessionChanged(outbox), 
+      offTrack2s, 
+      //pitstop
+       ]
   }
 
   const watcher = new Watcher(outbox, config);
