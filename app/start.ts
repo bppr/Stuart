@@ -24,7 +24,7 @@ export function start() {
   });
 
   win.loadFile(join(__dirname, '..', 'ui', 'main.html'));
-  win.webContents.openDevTools();
+  // win.webContents.openDevTools();
 
   startSDK(win);
 }

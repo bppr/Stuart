@@ -2,6 +2,7 @@ import React from 'react';
 
 import { IncidentData } from '@common/index';
 import * as sdk from '@ui/sdk';
+import { IncidentRecord } from './App';
 
 // turns 0.78658 to 75.66%
 function formatPct(lapPct: number, decimals: number = 2) {
@@ -12,7 +13,9 @@ function formatPct(lapPct: number, decimals: number = 2) {
   return `${rounded}%`
 }
 
-export default function Incident(props: { incident: IncidentData }) {
+type IncidentHandler = () => void
+
+export default function Incident(props: { incident: IncidentRecord, onAcknowledge: IncidentHandler, onDismiss: IncidentHandler }) {
   const car = props.incident.car;
 
   let incidentTypeStr = "";
@@ -25,7 +28,7 @@ export default function Incident(props: { incident: IncidentData }) {
     sdk.replay(props.incident)
   }
 
-  return <div className="incident">
+  return <div className={`incident ${props.incident.resolved ? 'resolved' : '' }`}>
     <div className="incident-header">
       <div className="incident-deets">
         <h2>Car #{ car.number }{ incidentTypeStr }</h2>
@@ -35,8 +38,8 @@ export default function Incident(props: { incident: IncidentData }) {
 
       <div className="incident-controls">
         <a title="Show Replay" onClick={ showReplay }>🎥</a>
-        <a title="Tally Incident">➕</a>
-        <a title="Dismiss Incident">🙈</a>
+        { !props.incident.resolved && <a onClick={props.onAcknowledge} title="Tally Incident">➕</a> }
+        { !props.incident.resolved && <a onClick={props.onDismiss} title="Dismiss Incident">🙈</a> }
       </div>
     </div>
 

@@ -2,14 +2,26 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
-.incidents {
+.app-main {
+  display: flex;
+}
+
+.incidents, .incident-counts {
   margin: 1em;
+}
+
+.incidents {
+  min-width: 500px;
 }
 
 .incident {
   padding: 1em;
   margin: 1em 0em;
   border: 1px solid grey;
+}
+
+.incident.resolved {
+  opacity: 0.5;
 }
 
 .incident-header {
@@ -41,4 +53,28 @@ body {
 .incident-controls a:hover {
   opacity: 1.0;
   cursor: pointer;
+}
+
+.incident-counts {
+  max-width: 30%;
+}
+
+.car-incident-count {
+  display: flex;
+  align-items: center;
+  border: 1px solid black;
+  padding: 0.25em;
+  margin: 0.2em;
+}
+
+.car-incident-count .tip {
+  opacity: 0.0;
+}
+
+.car-incident-count:hover .tip, .car-incident-count.selected .tip {
+  opacity: 0.5;
+}
+
+.car-incident-count:hover, .car-incident-count.selected {
+  background-color: bisque;
 }
