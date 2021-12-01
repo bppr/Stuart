@@ -2,13 +2,13 @@ import { BrowserWindow } from 'electron'
 import { join } from 'path'
 import iracing from 'node-irsdk-2021';
 
-import Watcher from '@app/state';
-import { NotifyOfSessionChanged } from "@app/watchers/NotifyOfSessionChanged";
-import { NotifyOfIncident } from "@app/watchers/NotifyOfIncident";
-import { OffTrackTimer } from '@app/watchers/offtrack';
-import '@app/ipc-inbox';
+import Watcher from './state';
+import { NotifyOfSessionChanged } from "./watchers/NotifyOfSessionChanged";
+import { NotifyOfIncident } from "./watchers/NotifyOfIncident";
+import { OffTrackTimer } from './watchers/offtrack';
+import './ipc-inbox';
 
-import { PitBoxTimer } from '@app/watchers/pitstop';
+import { PitBoxTimer } from './watchers/pitstop';
 import { MajorIncidentWatcher } from './watchers/fcy';
 
 export function start() {

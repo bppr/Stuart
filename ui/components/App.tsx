@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 
-import sdk from '@ui/sdk';
-import Incident from '@ui/components/Incident';
-import { IncidentData } from '@common/index';
+import sdk from '../sdk';
+import Incident from './Incident';
+import { IncidentData } from '../../common/index';
 import _ from 'lodash';
 
 export type IncidentRecord = IncidentData & {

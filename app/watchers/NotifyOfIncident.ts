@@ -1,4 +1,4 @@
-import { IncidentData } from '@common/index';
+import { IncidentData } from '../../common/index';
 import { Observer, Outbox, AppState } from '../state';
 
 export class NotifyOfIncident implements Observer {

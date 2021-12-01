@@ -1,5 +1,5 @@
-import { Observer, CarState, AppState, Outbox } from "@app/state";
-import { IncidentData } from "@common/index";
+import { Observer, CarState, AppState, Outbox } from "../state";
+import { IncidentData } from "../../common/index";
 
 type MajorIncident = {
     car: CarState

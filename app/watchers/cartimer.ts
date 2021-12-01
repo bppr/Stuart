@@ -1,4 +1,4 @@
-import { Observer, AppState, CarState } from '@app/state';
+import { Observer, AppState, CarState } from '../state';
 
 
 /**

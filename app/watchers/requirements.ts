@@ -4,8 +4,8 @@
  * must do during the course of a session.
  */
 
-import { AppState, CarState, Observer, Outbox, SessionType } from "@app/state";
-import { IncidentData } from "@common/index";
+import { AppState, CarState, Observer, Outbox, SessionType } from "../state";
+import { IncidentData } from "../../common/index";
 
 
 

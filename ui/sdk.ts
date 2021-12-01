@@ -1,6 +1,6 @@
 // override / extend default window object
 
-import { IncidentData } from "@common/index";
+import { IncidentData } from "../common/index";
 
 // see ui/types/api.d.ts
 declare var window: WindowWithSDK

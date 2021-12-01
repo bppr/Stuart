@@ -1,6 +1,6 @@
-import { CarState, AppState, Observer, Outbox } from '@app/state';
+import { CarState, AppState, Observer, Outbox } from '../state';
 import { CarTimer } from './cartimer';
-import { IncidentData } from '@common/index';
+import { IncidentData } from '../../common/index';
 
 /**
  * OffTrackTimer is a {@link CarTimer} that publishes an incident if the car has been off track for more than a short period of time.
