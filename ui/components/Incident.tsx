@@ -1,7 +1,6 @@
 import React from 'react';
 
-import { IncidentData } from '@common/index';
-import * as sdk from '@ui/sdk';
+import * as sdk from '../sdk';
 import { IncidentRecord } from './App';
 
 // turns 0.78658 to 75.66%
@@ -17,7 +16,7 @@ type IncidentHandler = () => void
 
 export default function Incident(props: { 
   incident: IncidentRecord, 
-  onAcknowledge: IncidentHandler, 
+  onTally: IncidentHandler, 
   onDismiss: IncidentHandler,
   unresolve: IncidentHandler
 }) {
@@ -49,7 +48,7 @@ export default function Incident(props: {
 
       <div className="incident-controls">
         <a title="Show Replay" onClick={ showReplay }>🎥</a>
-        { !props.incident.resolved && <a onClick={props.onAcknowledge} title="Tally Incident">➕</a> }
+        { !props.incident.resolved && <a onClick={props.onTally} title="Tally Incident">➕</a> }
         { !props.incident.resolved && <a onClick={props.onDismiss} title="Dismiss Incident">🙈</a> }
         { props.incident.resolved && <a onClick={props.unresolve} title="Unresolve Incident">👀</a>}
       </div>

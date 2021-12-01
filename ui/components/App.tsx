@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
+import _ from 'lodash';
 
 import sdk from '../sdk';
 import Incident from './Incident';
 import { IncidentData } from '../../common/index';
-import _ from 'lodash';
+// import { TEST_INCIDENTS } from '../test-utils';
 
 export type IncidentRecord = IncidentData & {
   resolved: boolean
@@ -11,67 +12,34 @@ export type IncidentRecord = IncidentData & {
   key: number
 }
 
-type IncidentCounts = {
-  [carNumber: string]: number
+type IncidentsByCar = { [car: string]: number }
+
+function replace<T>(array: T[], index: number, element: T): T[] {
+  const arr = [...array];
+  arr.splice(index, 1, element);
+
+  return arr;
 }
 
-const INITIAL_INCIDENTS: IncidentRecord[] = [
-  // {
-  //   sessionNum: 0,
-  //   sessionTime: 45.5016098234,
-  //   resolved: false,
-  //   tallied: false,
-  //   car: {
-  //     index: 0,
-  //     driverName: 'Brian Pratt2',
-  //     number: '21',
-  //     teamName: 'Powell Autosport',
-  //     incidentCount: 3,
-  //     currentLap: 4,
-  //     currentLapPct: 0.4205678
-  //   }
-  // },
-  // {
-  //   sessionNum: 0,
-  //   sessionTime: 49.5016098234,
-  //   resolved: false,
-  //   tallied: false,
-  //   car: {
-  //     index: 0,
-  //     driverName: 'Brian Pratt2',
-  //     number: '21',
-  //     teamName: 'Powell Autosport',
-  //     incidentCount: 5,
-  //     currentLap: 4,
-  //     currentLapPct: 0.4405678
-  //   }
-  // },
-  // {
-  //   sessionNum: 0,
-  //   sessionTime: 58.591304598,
-  //   resolved: false,
-  //   tallied: false,
-  //   car: {
-  //     index: 1,
-  //     driverName: 'Mike Racecar',
-  //     number: '18',
-  //     teamName: 'Gabir Motors',
-  //     incidentCount: 7,
-  //     currentLap: 3,
-  //     currentLapPct: 0.6958742
-  //   }
-  // }
-]
+const INITIAL_INCIDENTS: IncidentRecord[] = [];
+// const INITIAL_INCIDENTS: IncidentRecord[] = TEST_INCIDENTS;
 
 export function App() {
   const [incidents, setIncidents] = useState(INITIAL_INCIDENTS);
-  const [driverIncidentCounts, setDriverIncidentCounts] = useState<IncidentCounts>({});
+
+  const incidentsByCar: IncidentsByCar = incidents.reduce((acc, {car, tallied}) => {
+    const count = acc[car.number] ?? 0;
+    return { ...acc, [car.number]: count + (tallied ? 1 : 0) }
+  }, {} as IncidentsByCar)
+
   const [selectedCar, setSelectedCar] = useState<string | undefined>(undefined);
 
+  const displayIncidents = selectedCar
+    ? incidents.filter(i => i.car.number == selectedCar && i.tallied == true)
+    : incidents;
+
   function listen() {
-    // TODO: let's increment this on the backend; 
-    // this is just to facilitate better handling
-    let key = 1;
+    let key = 1; // TODO: this is temporary
 
     sdk.receive('incident', (message: IncidentData) => {
       setIncidents(prev => [{ ...message, resolved: false, tallied: false, key }, ...prev]);
@@ -79,48 +47,40 @@ export function App() {
     });
   }
 
-  function dismissIncident(index: number) {
+  function resolveIncident(index: number) {
     return (tallied: boolean = false) => {
-      const incident = incidents[index];
-      const newIncidents = _.clone(incidents);
-      newIncidents[index] = {...incident, resolved: true, tallied };
-
-      setIncidents(newIncidents);
-    }
-  }
-
-  function countIncident(index: number) {
-    return () => {
-      const carNumber = incidents[index].car.number
-
-      setDriverIncidentCounts(prev => {
-        const prevValue = prev[carNumber] ?? 0
-        return {...prev, [carNumber]: prevValue + 1 }
-      });
-
-      dismissIncident(index)(true);
+      const incident = displayIncidents[index];
+      
+      setIncidents(prev => replace(
+        prev, 
+        prev.findIndex(i => i.key === incident.key), 
+        { ...incident, resolved: true, tallied }
+      ));
     }
   }
 
   function unresolveIncident(index: number) {
     return () => {
-      const incident = incidents[index];
-      const newIncidents = [...incidents]
-      newIncidents[index] = {...incident, resolved: false, tallied: false };
+      const incident = displayIncidents[index];
 
-      setIncidents(newIncidents);
-
-      if (incident.tallied) {
-        setDriverIncidentCounts(prev => {
-          const prevValue = prev[incident.car.number] ?? 0
-          return {...prev, [incident.car.number]: prevValue - 1 }
-        });
-      }
+      setIncidents(prev => replace(
+        prev,
+        prev.findIndex(i => i.key === incident.key),
+        { ...incident, resolved: false, tallied: false }
+      ));
     }
   }
+  
+  function tallyIncident(index: number) {
+    return () => resolveIncident(index)(true);
+  }
 
-  function selectCar(carNumber: string) {
-    return () => setSelectedCar(selectedCar === carNumber ? undefined : carNumber)
+  function dismissIncident(index: number) {
+    return () => resolveIncident(index)(false);
+  }
+
+  function selectCar(number: string) {
+    return () => setSelectedCar(selectedCar === number ? undefined : number)
   }
 
   function clearIncidents() {
@@ -129,10 +89,6 @@ export function App() {
   }
 
   useEffect(listen, []);
-
-  const displayIncidents = selectedCar
-    ? incidents.filter(i => i.car.number == selectedCar && i.tallied == true)
-    : incidents;
 
   return <div className="app-main">
     <section className="incidents">
@@ -148,10 +104,10 @@ export function App() {
       </p>
 
       { 
-        displayIncidents.map((incident, idx) => <Incident
-          onDismiss={() => dismissIncident(idx)(false)}
-          onAcknowledge={countIncident(idx)}
-          unresolve={unresolveIncident(idx)}
+        displayIncidents.map((incident, index) => <Incident
+          onDismiss={dismissIncident(index)}
+          onTally={tallyIncident(index)}
+          unresolve={unresolveIncident(index)}
           key={incident.key} 
           incident={incident} />
         )
@@ -161,7 +117,7 @@ export function App() {
     <section className="incident-counts">
       <h1>Counts</h1>
       {
-        _.toPairs(driverIncidentCounts)
+        _.toPairs(incidentsByCar)
           .sort((a, b) => a[1] < b[1] ? 1 : -1)
           .map(([carNumber, incidentCount]) => <IncidentCount
             key={carNumber}
