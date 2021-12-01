@@ -15,7 +15,12 @@ function formatPct(lapPct: number, decimals: number = 2) {
 
 type IncidentHandler = () => void
 
-export default function Incident(props: { incident: IncidentRecord, onAcknowledge: IncidentHandler, onDismiss: IncidentHandler }) {
+export default function Incident(props: { 
+  incident: IncidentRecord, 
+  onAcknowledge: IncidentHandler, 
+  onDismiss: IncidentHandler,
+  unresolve: IncidentHandler
+}) {
   const car = props.incident.car;
 
   let incidentTypeStr = "";
@@ -28,10 +33,16 @@ export default function Incident(props: { incident: IncidentRecord, onAcknowledg
     sdk.replay(props.incident)
   }
 
-  return <div className={`incident ${props.incident.resolved ? 'resolved' : '' }`}>
+  const classNames = [
+    'incident', 
+    props.incident.resolved && 'resolved', 
+    props.incident.tallied && 'tallied'
+  ].filter(n => n).join(' ')
+
+  return <div className={classNames}>
     <div className="incident-header">
       <div className="incident-deets">
-        <h2>Car #{ car.number }{ incidentTypeStr }</h2>
+        <h2>Car #{ car.number } { incidentTypeStr }</h2>
         <h4 className="incident-count">{ car.incidentCount }x</h4>
         <h5>Lap { car.currentLap } / { formatPct(car.currentLapPct) }</h5>
       </div>
@@ -40,6 +51,7 @@ export default function Incident(props: { incident: IncidentRecord, onAcknowledg
         <a title="Show Replay" onClick={ showReplay }>🎥</a>
         { !props.incident.resolved && <a onClick={props.onAcknowledge} title="Tally Incident">➕</a> }
         { !props.incident.resolved && <a onClick={props.onDismiss} title="Dismiss Incident">🙈</a> }
+        { props.incident.resolved && <a onClick={props.unresolve} title="Unresolve Incident">👀</a>}
       </div>
     </div>
 

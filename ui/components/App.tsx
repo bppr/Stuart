@@ -7,6 +7,7 @@ import _ from 'lodash';
 
 export type IncidentRecord = IncidentData & {
   resolved: boolean
+  tallied: boolean
 }
 
 type IncidentCounts = {
@@ -18,6 +19,7 @@ const INITIAL_INCIDENTS: IncidentRecord[] = [
   //   sessionNum: 0,
   //   sessionTime: 45.5016098234,
   //   resolved: false,
+  //   tallied: false,
   //   car: {
   //     index: 0,
   //     driverName: 'Brian Pratt2',
@@ -32,6 +34,7 @@ const INITIAL_INCIDENTS: IncidentRecord[] = [
   //   sessionNum: 0,
   //   sessionTime: 49.5016098234,
   //   resolved: false,
+  //   tallied: false,
   //   car: {
   //     index: 0,
   //     driverName: 'Brian Pratt2',
@@ -46,6 +49,7 @@ const INITIAL_INCIDENTS: IncidentRecord[] = [
   //   sessionNum: 0,
   //   sessionTime: 58.591304598,
   //   resolved: false,
+  //   tallied: false,
   //   car: {
   //     index: 1,
   //     driverName: 'Mike Racecar',
@@ -69,15 +73,15 @@ export function App() {
 
   function listen() {
     sdk.receive('incident', (message: IncidentData) => {
-      setIncidents(prev => [{ ...message, resolved: false }, ...prev]);
+      setIncidents(prev => [{ ...message, resolved: false, tallied: false }, ...prev]);
     });
   }
 
   function dismissIncident(index: number) {
-    return () => {
+    return (tallied: boolean = false) => {
       const incident = incidents[index];
       const newIncidents = _.clone(incidents);
-      newIncidents[index] = {...incident, resolved: true };
+      newIncidents[index] = {...incident, resolved: true, tallied };
 
       setIncidents(newIncidents);
     }
@@ -92,7 +96,24 @@ export function App() {
         return {...prev, [carNumber]: prevValue + 1 }
       });
 
-      dismissIncident(index)();
+      dismissIncident(index)(true);
+    }
+  }
+
+  function unresolveIncident(index: number) {
+    return () => {
+      const incident = incidents[index];
+      const newIncidents = [...incidents]
+      newIncidents[index] = {...incident, resolved: false, tallied: false };
+
+      setIncidents(newIncidents);
+
+      if (incident.tallied) {
+        setDriverIncidentCounts(prev => {
+          const prevValue = prev[incident.car.number] ?? 0
+          return {...prev, [incident.car.number]: prevValue - 1 }
+        });
+      }
     }
   }
 
@@ -108,7 +129,7 @@ export function App() {
   useEffect(listen, []);
 
   const displayIncidents = selectedCar
-    ? incidents.filter(i => i.car.number == selectedCar)
+    ? incidents.filter(i => i.car.number == selectedCar && i.tallied == true)
     : incidents;
 
   return <div className="app-main">
@@ -117,15 +138,16 @@ export function App() {
       <p>
         { 
           selectedCar && 
-            <span>{`Showing incidents for Car #${selectedCar} `}
+            <span>{`Showing only counted incidents for Car #${selectedCar} `}
             <button onClick={() => setSelectedCar(undefined)}>Show All</button></span>
         }
         { !selectedCar && 'Showing all incidents' }
       </p>
       { 
         displayIncidents.map((incident, idx) => <Incident
-          onDismiss={dismissIncident(idx)}
+          onDismiss={() => dismissIncident(idx)(false)}
           onAcknowledge={countIncident(idx)}
+          unresolve={unresolveIncident(idx)}
           key={keyFor(incident)} 
           incident={incident} />
         )
