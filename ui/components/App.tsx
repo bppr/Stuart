@@ -8,6 +8,7 @@ import _ from 'lodash';
 export type IncidentRecord = IncidentData & {
   resolved: boolean
   tallied: boolean
+  key: number
 }
 
 type IncidentCounts = {
@@ -62,18 +63,19 @@ const INITIAL_INCIDENTS: IncidentRecord[] = [
   // }
 ]
 
-function keyFor({sessionNum, car: { number, incidentCount }}: IncidentData): string {
-  return `s${sessionNum}.c${number}.i${incidentCount}`
-}
-
 export function App() {
   const [incidents, setIncidents] = useState(INITIAL_INCIDENTS);
   const [driverIncidentCounts, setDriverIncidentCounts] = useState<IncidentCounts>({});
   const [selectedCar, setSelectedCar] = useState<string | undefined>(undefined);
 
   function listen() {
+    // TODO: let's increment this on the backend; 
+    // this is just to facilitate better handling
+    let key = 1;
+
     sdk.receive('incident', (message: IncidentData) => {
-      setIncidents(prev => [{ ...message, resolved: false, tallied: false }, ...prev]);
+      setIncidents(prev => [{ ...message, resolved: false, tallied: false, key }, ...prev]);
+      key += 1 
     });
   }
 
@@ -135,6 +137,7 @@ export function App() {
   return <div className="app-main">
     <section className="incidents">
       <h1>Incidents <button onClick={clearIncidents}>Clear</button></h1>
+
       <p>
         { 
           selectedCar && 
@@ -143,12 +146,13 @@ export function App() {
         }
         { !selectedCar && 'Showing all incidents' }
       </p>
+
       { 
         displayIncidents.map((incident, idx) => <Incident
           onDismiss={() => dismissIncident(idx)(false)}
           onAcknowledge={countIncident(idx)}
           unresolve={unresolveIncident(idx)}
-          key={keyFor(incident)} 
+          key={incident.key} 
           incident={incident} />
         )
       }

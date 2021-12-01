@@ -1,15 +1,25 @@
-import { BrowserWindow } from 'electron'
 import { join } from 'path'
+import fs from 'fs';
+
+import { BrowserWindow } from 'electron'
 import iracing from 'node-irsdk-2021';
 
 import Watcher from './state';
 import { NotifyOfSessionChanged } from "./watchers/NotifyOfSessionChanged";
 import { NotifyOfIncident } from "./watchers/NotifyOfIncident";
 import { OffTrackTimer } from './watchers/offtrack';
-import './ipc-inbox';
-
 import { PitBoxTimer } from './watchers/pitstop';
 import { MajorIncidentWatcher } from './watchers/fcy';
+
+import './ipc-inbox';
+
+function getMainFile(): string {
+  const root = join(__dirname, '..');
+  const devPath = join(root, 'build', 'ui', 'html', 'main.html');
+  const builtPath = join(root, 'ui', 'html', 'main.html');
+
+  return fs.existsSync(devPath) ? devPath : builtPath
+}
 
 export function start() {
   console.log('creating window');
@@ -23,7 +33,8 @@ export function start() {
     }
   });
 
-  win.loadFile(join(__dirname, '..', 'ui', 'main.html'));
+
+  win.loadFile(getMainFile());
   // win.webContents.openDevTools();
 
   startSDK(win);

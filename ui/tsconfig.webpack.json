@@ -1,17 +1,16 @@
 {
   "exclude": ["build"],
-  "ts-node": { "files": true },
-  "files": ["index.ts", "./app/irsdk.d.ts"],
+  "files": ["./main.tsx", "./types/api.d.ts"],
   "compilerOptions": {
     "target": "es2016",
-    "outDir": "./build",
+    "jsx": "react",
     "module": "commonjs",
     "esModuleInterop": true,
     "allowJs": true,
     "forceConsistentCasingInFileNames": true,
     "strict": true,
     "skipLibCheck": true,
-    "baseUrl": "./",
+    "baseUrl": "../",
     "paths": {
       "@app/*": ["app/*"],
       "@common/*": ["common/*"],
