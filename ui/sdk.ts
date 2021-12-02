@@ -13,10 +13,6 @@ function toMS(seconds: number): number {
 }
 
 export function replay({ car, sessionNum, sessionTime }: IncidentData) {
-
-  // we should rewind a bit
-  let stRewind = Math.max(sessionTime - 2.0, 0);
-
-  console.log('requesting replay of car', car, 'at', toMS(stRewind));
-  window.api.replay(car.number, sessionNum, toMS(stRewind));
+  const ms = toMS(Math.max(sessionTime - 2.0, 0));
+  window.api.replay(car.number, sessionNum, ms);
 }
