@@ -46,13 +46,16 @@ export function App() {
 
     sdk.receive('incident-resolved', (message: BackendIncident) => {
       console.log("got incident resolved: " + message.id);
+
+      // this doesn't seem to work
       setIncidents((prev) => {
-        prev.forEach((inc) => {
+        return prev.map((inc) => {
           if(inc.id == message.id) {
-            inc.resolution = message.resolution;
+            return message;
+          } else {
+            return inc;
           }
-        });
-        return prev;
+        })
       });
     });
   }
