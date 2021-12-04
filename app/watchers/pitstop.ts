@@ -1,7 +1,7 @@
 import { CarTimer } from "./cartimer";
 import { CarState, AppState, Observer, SessionType } from '../state';
-import { IncidentData } from "../../common/index";
 import { Requirement, SessionMarker } from "./requirements";
+import { IncidentData } from "@common/incident";
 
 export class PitBoxTimer extends CarTimer implements Requirement {
 

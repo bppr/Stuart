@@ -6,10 +6,12 @@ import iracing from 'node-irsdk-2021';
 
 import Watcher from './state';
 import { NotifyOfSessionChanged } from "./watchers/NotifyOfSessionChanged";
-import { NotifyOfIncident } from "./watchers/NotifyOfIncident";
+import { IRacingIncidentCount } from "./watchers/NotifyOfIncident";
 import { OffTrackTimer } from './watchers/offtrack';
 import { PitBoxTimer } from './watchers/pitstop';
 import { MajorIncidentWatcher } from './watchers/fcy';
+import { IncidentDb } from '@common/incidentdb';
+import Application from './application';
 
 import './ipc-inbox';
 
@@ -47,16 +49,19 @@ function startSDK(win: BrowserWindow) {
   });
 
   const outbox = win.webContents;
+  Application.initialize(outbox);
+
+  const incidentDb = Application.getInstance().incidents;
 
   sdk.on('Connected', () => console.log('connected to iRacing!'));
 
   const config = {
     observers: [ 
-      new NotifyOfIncident(outbox), 
+      new IRacingIncidentCount(incidentDb), 
       new NotifyOfSessionChanged(outbox), 
-      new OffTrackTimer(outbox, 10, 2.0),
+      new OffTrackTimer(incidentDb, 10, 2.0),
       new PitBoxTimer(30), 
-      new MajorIncidentWatcher(outbox)
+      new MajorIncidentWatcher(outbox, incidentDb)
     ]
   }
 

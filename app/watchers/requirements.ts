@@ -4,10 +4,8 @@
  * must do during the course of a session.
  */
 
+import { IncidentData } from "@common/incident";
 import { AppState, CarState, Observer, Outbox, SessionType } from "../state";
-import { IncidentData } from "../../common/index";
-
-
 
 export enum SessionMarker {
     StartOfRace,
@@ -17,7 +15,6 @@ export enum SessionMarker {
     StartOfPractice,
     EndOfPractice
 }
-
 
 
 // TODO we will have to be very careful about which states we send to these 

@@ -1,6 +1,6 @@
 import { CarState, AppState, Observer, Outbox } from '../state';
 import { CarTimer } from './cartimer';
-import { IncidentData } from '../../common/index';
+import { IncidentDb } from '@common/incidentdb';
 
 /**
  * OffTrackTimer is a {@link CarTimer} that publishes an incident if the car has been off track for more than a short period of time.
@@ -22,13 +22,10 @@ export class OffTrackTimer extends CarTimer {
 	 */
 	private dangerousRejoinDistance: number;
 	
-	constructor(outbox: Outbox, dangerousRejoinDistance?: number, timeLimit?: number) {
+	constructor(private incidentDb: IncidentDb, dangerousRejoinDistance?: number, timeLimit?: number) {
 		super(timeLimit);
-		this.outbox = outbox;
 		this.dangerousRejoinDistance = dangerousRejoinDistance || 10;
 	}
-
-	private outbox: Outbox;
 
 	isCarInTargetState(car: CarState): boolean {
 		return car.trackSurface == "OffTrack";
@@ -41,7 +38,7 @@ export class OffTrackTimer extends CarTimer {
 			// Report the incident from when they actually went off track, not when we declared it an off track
 			let otTime = Math.max(0, sessionTime - this.getTimeLimit());
 
-			this.outbox.send<IncidentData>('incident', { car, sessionNum, sessionTime: otTime, type: 'Off-Track' })
+			this.incidentDb.publish({ car, sessionNum, sessionTime: otTime, type: 'Off-Track' });
 		}
 	}
 	
@@ -74,8 +71,7 @@ export class OffTrackTimer extends CarTimer {
 			    this.dangerousRejoinDistance + " meters of " + carList + ".");
 				
 			const { sessionNum, sessionTime } = app;
-			this.outbox.send<IncidentData>('incident', 
-			{ car, sessionNum, sessionTime, type: 'Unsafe Rejoin' });
+			this.incidentDb.publish({ car, sessionNum, sessionTime, type: 'Unsafe Rejoin' });
 
 		}
 	}

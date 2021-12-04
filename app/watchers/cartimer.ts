@@ -1,5 +1,10 @@
 import { Observer, AppState, CarState } from '../state';
 
+type CarTime = {
+	startTime: number,
+	cbTriggered: boolean,
+	cooldownTime?: number
+}
 
 /**
  * CarTimer is a base class for implementing state watchers that require 
@@ -17,16 +22,18 @@ import { Observer, AppState, CarState } from '../state';
  * minimum amount of time.
  */
 export abstract class CarTimer implements Observer {
-	private startTimesByCarIdx: Map<number, number>;
-	private cbTriggeredByCarIdx: Set<number>;
+	private timesByCarIdx: Map<number, CarTime>;
 	
 	// this could be a property?
 	private timeLimit: number;
 	
-	constructor(timeLimit?: number) {
+	// TODO not implemented  yet
+	private cooldownTime: number;
+	
+	constructor(timeLimit?: number, cooldown?: number) {
 		this.timeLimit = timeLimit || 0;
-		this.startTimesByCarIdx = new Map();
-		this.cbTriggeredByCarIdx = new Set();
+		this.cooldownTime = cooldown || 0;
+		this.timesByCarIdx = new Map();
 	}
 	
 	getTimeLimit(): number {
@@ -77,32 +84,39 @@ export abstract class CarTimer implements Observer {
 		
 		newState.cars.forEach((car) => {
 			let carIdx = car.index;
-			let started = this.startTimesByCarIdx.has(carIdx);
+			let started = this.timesByCarIdx.has(carIdx);
 			
 			let targetState = this.isCarInTargetState(car);
 			if(targetState) {
 				let startTime = 0;
 				if(!started) {
 					startTime = sessionTime;
-					this.startTimesByCarIdx.set(carIdx, startTime);
-					this.cbTriggeredByCarIdx.delete(carIdx);
+					let ct: CarTime = {
+						startTime: sessionTime,
+						cbTriggered: false
+					}
+					this.timesByCarIdx.set(carIdx, ct);
+
 					this.onStateEntered(car, newState);
 				} else {
-				   startTime = this.startTimesByCarIdx.get(carIdx)!;
+				   startTime = this.timesByCarIdx.get(carIdx)!.startTime;
 				}
 				
 				let duration = sessionTime - startTime;
 				this.onStateTime(car, duration, newState);
 				
-				if(duration >= this.timeLimit && !(this.cbTriggeredByCarIdx.has(carIdx))) {
+				if(duration >= this.timeLimit && !(this.timesByCarIdx.get(carIdx)!.cbTriggered)) {
 					this.onStateTimeExceeded(car, duration, newState);
-					this.cbTriggeredByCarIdx.add(carIdx);
+					let ct = this.timesByCarIdx.get(carIdx)!;
+					ct.cbTriggered = true;
+					this.timesByCarIdx.set(carIdx, ct);
 				}
 			} else {
 				if(started) {
-					let duration = sessionTime - this.startTimesByCarIdx.get(carIdx)!;
-					this.onStateExited(car, duration, this.cbTriggeredByCarIdx.delete(carIdx), newState);
-					this.startTimesByCarIdx.delete(carIdx);
+					let ct = this.timesByCarIdx.get(carIdx)!;
+					let duration = sessionTime - ct.startTime;
+					this.onStateExited(car, duration, ct.cbTriggered, newState);
+					this.timesByCarIdx.delete(carIdx);
 				}
 			}
 		});

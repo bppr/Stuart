@@ -15,6 +15,15 @@ contextBridge.exposeInMainWorld(
     },
     jumpToTime: (sessionNum, sessionTime) => {
       ipcRenderer.send('jump-to-time', { sessionNum, sessionTime });
+    },
+    acknowledgeIncident: (incidentId) => {
+      ipcRenderer.send('acknowledge-incident', {incidentId});
+    },
+    dismissIncident: (incidentId) => {
+      ipcRenderer.send('dismiss-incident', {incidentId});
+    },
+    unresolveIncident: (incidentId) => {
+      ipcRenderer.send('unresolve-incident', {incidentId});
     }
   }
 );
