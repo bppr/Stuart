@@ -1,5 +1,3 @@
-import { Resolution } from "../../common/incident";
-
 interface APIBridge {
   receive(msgName: string, handler: (any) => void);
   replay(carNumber: string, sessionNum: number, sessionTime: number);

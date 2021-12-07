@@ -10,7 +10,6 @@ import { IRacingIncidentCount } from "./watchers/NotifyOfIncident";
 import { OffTrackTimer } from './watchers/offtrack';
 import { PitBoxTimer } from './watchers/pitstop';
 import { MajorIncidentWatcher } from './watchers/fcy';
-import { IncidentDb } from '@common/incidentdb';
 import Application from './application';
 
 import './ipc-inbox';

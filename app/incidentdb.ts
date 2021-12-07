@@ -1,5 +1,5 @@
-import { Outbox } from "../app/state";
-import { Incident, IncidentData, Resolution } from "./incident";
+import { Outbox } from "./state";
+import { Incident, IncidentData, Resolution } from "../common/incident";
 
 /**
  * IncidentDb is an in-memory database of incidents, which keeps track of their resolutions and publishes changes when an incident is created or resolved.
@@ -34,9 +34,7 @@ import { Incident, IncidentData, Resolution } from "./incident";
         this.incidents.set(incident.id, incident);
 
         this.outbox.send<Incident>('incident-created', incident);
-
-        console.log("IN: published incident " + incident.id);
-
+        
         return incident;
     }
 
@@ -48,6 +46,14 @@ import { Incident, IncidentData, Resolution } from "./incident";
      * @returns the new resolution of the incident, which may be different from the given resolution, if the incident was already resolved, or may be 'undefined' if no incident with the given ID exists.
      */
     public resolve(id: number, resolution: Resolution): Resolution | undefined {
+        return this.changeResolution(id, resolution);
+    }
+
+    public reopen(id: number): void {
+        this.changeResolution(id, undefined);
+    }
+
+    private changeResolution(id:number, resolution?: Resolution): Resolution | undefined {
         let incident = this.incidents.get(id);
         if(incident) {
             if(!(incident.resolution)) {
@@ -58,13 +64,5 @@ import { Incident, IncidentData, Resolution } from "./incident";
             }
         }
         return incident?.resolution;
-    }
-
-    public reopen(id: number): void {
-        let incident = this.incidents.get(id);
-        if(incident) {
-            incident.resolution = undefined;
-            this.incidents.set(id, incident);
-        }
     }
 }

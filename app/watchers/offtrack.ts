@@ -1,6 +1,7 @@
-import { CarState, AppState, Observer, Outbox } from '../state';
+import { CarState, AppState, } from '../state';
 import { CarTimer } from './cartimer';
-import { IncidentDb } from '@common/incidentdb';
+import { IncidentDb } from '@app/incidentdb';
+import { insideTrackRange } from "@app/util";
 
 /**
  * OffTrackTimer is a {@link CarTimer} that publishes an incident if the car has been off track for more than a short period of time.
@@ -10,7 +11,7 @@ import { IncidentDb } from '@common/incidentdb';
  * Additionally, dangerous rejoins can be reported by setting {@link reportDangerousRejoins}.
  */
 export class OffTrackTimer extends CarTimer {
-	
+
 	public reportOffTracks: boolean = true;
 	public reportUnsafeRejoins: boolean = true;
 
@@ -21,7 +22,7 @@ export class OffTrackTimer extends CarTimer {
 	 * Must not be negative
 	 */
 	private dangerousRejoinDistance: number;
-	
+
 	constructor(private incidentDb: IncidentDb, dangerousRejoinDistance?: number, timeLimit?: number) {
 		super(timeLimit);
 		this.dangerousRejoinDistance = dangerousRejoinDistance || 10;
@@ -32,25 +33,25 @@ export class OffTrackTimer extends CarTimer {
 	}
 
 	onStateTimeExceeded(car: CarState, time: number, app: AppState): void {
-		console.log("OT: " + car.driverName + " has gone off track.");	
+		//console.log("OT: " + car.driverName + " has gone off track.");	
 		const { sessionNum, sessionTime } = app;
-		if(this.reportOffTracks) {
+		if (this.reportOffTracks) {
 			// Report the incident from when they actually went off track, not when we declared it an off track
 			let otTime = Math.max(0, sessionTime - this.getTimeLimit());
 
 			this.incidentDb.publish({ car, sessionNum, sessionTime: otTime, type: 'Off-Track' });
 		}
 	}
-	
+
 	onStateExited(car: CarState, time: number, timeExceeded: boolean, app: AppState): void {
 
 		//console.log("DOT: " + timeExceeded);
 
 		// no need to check if it was a small off-track
-		if(!timeExceeded) return;
+		if (!timeExceeded) return;
 
 		// if car was reset or disappeared, no worries
-		if(car.trackSurface != "OnTrack") return;
+		if (car.trackSurface != "OnTrack") return;
 
 		// search forward for other cars
 		let searchDistancePct = this.dangerousRejoinDistance / app.trackLength;
@@ -58,48 +59,24 @@ export class OffTrackTimer extends CarTimer {
 
 		let carsNearby = app.cars.filter((c) => {
 			return c.index != carIdx &&
-				this.insideTrackRange(c.currentLapPct, 
-					car.currentLapPct - searchDistancePct, 
+				insideTrackRange(c.currentLapPct,
+					car.currentLapPct - searchDistancePct,
 					car.currentLapPct + searchDistancePct);
 		}, this);
-		
-		if(carsNearby.length > 0) {
+
+		if (carsNearby.length > 0) {
 			let carNames = carsNearby.map((car) => car.driverName);
 			let carList = carNames.join(", ");
 
-			console.log("OT: " + car.driverName + " rejoined the track within " + 
-			    this.dangerousRejoinDistance + " meters of " + carList + ".");
-				
+			//console.log("OT: " + car.driverName + " rejoined the track within " + 
+			//    this.dangerousRejoinDistance + " meters of " + carList + ".");
+
 			const { sessionNum, sessionTime } = app;
 			this.incidentDb.publish({ car, sessionNum, sessionTime, type: 'Unsafe Rejoin' });
 
 		}
 	}
 
-	/**
-	 * Returns true if the value is between the two positions on track, where
-	 * all values are modulo'd properly to deal with the track being a circuit.
-	 *
-	 * Examples:
-	 * - insideTrackRange(0.5, 0.4, 0.6) : true
-	 * - insideTrackRange(0.0, 0.9, 1.1) : true
-	 * - insideTrackRange(0.0, 0.9, 0.1) : true
-	 * - insideTrackRange(1.6, 0.7, 0.2) : false
-	 */
-	private insideTrackRange(value: number, min: number, max: number): boolean {
-	
-		// modulo all values to get them between 0 and 1
-		value -= Math.floor(value);
-		min -= Math.floor(min);
-		max -= Math.floor(max);
-		
-		// adjust min and max so that they're in the proper order
-		if(max < min) {
-			max += 1.0;
-		}
-		
-		return (value >= min && value <= max) ||
-			((value+1) >= min && (value+1) <= max);
-	}
+
 
 }

@@ -62,10 +62,10 @@ export default function Incident(props: {
       </div>
 
       <div className="incident-controls">
-        <a title="Show Replay" onClick={ showReplay }>🎥</a>
+        <a title="Show Replay" onClick={ showReplay }>🔍</a>
         { props.incident.resolution == undefined && <a onClick={ acknowledgeIncident } title="Tally Incident">✔️</a> }
         { props.incident.resolution == undefined && <a onClick={ dismissIncident } title="Dismiss Incident">❌</a> }
-        { props.incident.resolution != undefined && <a onClick={ unresolveIncident } title="Unresolve Incident">👀</a> }
+        { props.incident.resolution != undefined && <a onClick={ unresolveIncident } title="Unresolve Incident">↩️</a> }
       </div>
     </div>
 

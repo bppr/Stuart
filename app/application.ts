@@ -1,8 +1,9 @@
-
-import iracing from 'node-irsdk-2021';
-import { IncidentDb } from '../common/incidentdb';
+import { IncidentDb } from './incidentdb';
 import { Outbox } from './state';
 
+/**
+ * Application contains certain global variables and state that may be initialized and accessed out of order
+ */
 export default class Application {
 
     public readonly incidents: IncidentDb;
