@@ -3,13 +3,8 @@ import _ from 'lodash';
 
 import sdk from '../sdk';
 import Incident from './Incident';
-import { IncidentData } from '../../common/index';
+import { Incident as BackendIncident } from '../../common/incident';
 
-export type IncidentRecord = IncidentData & {
-  resolved: boolean
-  tallied: boolean
-  key: number
-}
 
 // return a copy of array with element at index replaced by supplied element
 function replace<T>(array: T[], index: number, element: T): T[] {
@@ -17,7 +12,7 @@ function replace<T>(array: T[], index: number, element: T): T[] {
 }
 
 // use ./test-utils/TEST_INCIDENT for ui work
-const INITIAL_INCIDENTS: IncidentRecord[] = [];
+const INITIAL_INCIDENTS: BackendIncident[] = [];
 
 // App - the main UI component - takes no props
 // has state for incidents and selected car - re-renders on state changes
@@ -34,52 +29,34 @@ export function App() {
   // if a car is selected, only show tallied incidents for that car
   // else, show all incidents
   const displayedIncidents = selectedCar
-    ? incidents.filter(i => i.car.number == selectedCar && i.tallied)
+    ? incidents.filter(i => i.data.car.number == selectedCar && i.resolution == 'Acknowledged')
     : incidents;
 
   // list of [carNumber, incidentCount][] for tallied incidents
   const incidentsByCar = _(incidents)
-    .filter(i => i.tallied)
+    .filter(i => i.resolution == 'Acknowledged')
     .countBy('car.number')
     .toPairs()
     .sortBy(n => [n[1]])
 
   function listen() {
-    let key = 1; // TODO: this is temporary; backend to assign keys
-
-    sdk.receive('incident', (message: IncidentData) => {
-      setIncidents(prev => [{ ...message, resolved: false, tallied: false, key }, ...prev]);
-      key += 1 
+    sdk.receive('incident-created', (message: BackendIncident) => {
+      setIncidents(prev => [ message, ...prev]);
     });
-  }
 
-  // update UI-local incident state by incident index
-  // index is render-dependent, so displayedIncidents is the indexed collection
-  // incident is then updated by key, triggering a re-render
-  // ensures safe updates to 'global' list with filters applied
-  function updateIncident(index: number, params: { tallied: boolean, resolved: boolean }) {
-    const incident = displayedIncidents[index];
+    sdk.receive('incident-resolved', (message: BackendIncident) => {
+      console.log("got incident resolved: " + message.id);
 
-    setIncidents(prev => replace(
-      prev,
-      prev.findIndex(i => i.key === incident.key),
-      { ...incident, ...params }
-    ))
-  }
-  
-  // the following incident functions take an index and return a void function
-  // returned function is passed to child components as click handlers
-  // handlers update the requested incident (triggering a re-render)
-  function tallyIncident(index: number) {
-    return () => updateIncident(index, { resolved: true, tallied: true });
-  }
-
-  function dismissIncident(index: number) {
-    return () => updateIncident(index, { resolved: true, tallied: false });
-  }
-
-  function unresolveIncident(index: number) {
-    return () => updateIncident(index, { resolved: false, tallied: false })
+      setIncidents((prev) => {
+        return prev.map((inc) => {
+          if(inc.id == message.id) {
+            return message;
+          } else {
+            return inc;
+          }
+        })
+      });
+    });
   }
 
   // return void function that selects car with given number, triggering re-render
@@ -113,10 +90,7 @@ export function App() {
 
       { 
         displayedIncidents.map((incident, index) => <Incident
-          onDismiss={dismissIncident(index)}
-          onTally={tallyIncident(index)}
-          unresolve={unresolveIncident(index)}
-          key={incident.key} 
+          key={incident.id} 
           incident={incident} />
         )
       }

@@ -1,7 +1,7 @@
 import React from 'react';
 
 import * as sdk from '../sdk';
-import { IncidentRecord } from './App';
+import { Incident as BackendIncident } from '../../common/incident';
 
 // turns 0.78658 to 75.66%
 function formatPct(lapPct: number, decimals: number = 2) {
@@ -18,26 +18,38 @@ type IncidentHandler = () => void
 // allows tally/dismiss/resolve via props.onTally, props.onDismiss, props.onResolve
 // prop: incident, a record for an incident including its resolution state
 export default function Incident(props: { 
-  incident: IncidentRecord, 
-  onTally: IncidentHandler, 
-  onDismiss: IncidentHandler,
-  unresolve: IncidentHandler
+  incident: BackendIncident
 }) {
-  const car = props.incident.car;
-  const incidentType = props.incident.type ? `: ${props.incident.type}` : ''
+  const car = props.incident.data.car;
+  const incidentType = props.incident.data.type ? `: ${props.incident.data.type}` : ''
   
   // call back to main process, which calls irsdk to jump to correct car/time
   const showReplay = (ev: React.MouseEvent) => {
     ev.preventDefault()
-    sdk.replay(props.incident)
+    sdk.replay(props.incident.data)
+  }
+
+  const acknowledgeIncident = (ev: React.MouseEvent) => {
+    ev.preventDefault()
+    sdk.acknowledgeIncident(props.incident.id);
+  }
+
+  const dismissIncident = (ev: React.MouseEvent) => {
+    ev.preventDefault()
+    sdk.dismissIncident(props.incident.id);
+  }
+
+  const unresolveIncident = (ev: React.MouseEvent) => {
+    ev.preventDefault()
+    sdk.unresolveIncident(props.incident.id);
   }
 
   // compute classes for element styling (see styles/app.css)
   // filter conditional values
   const classNames = [
     'incident', 
-    props.incident.resolved && 'resolved', 
-    props.incident.tallied && 'tallied'
+    props.incident.resolution != undefined && 'resolved', 
+    props.incident.resolution == 'Acknowledged' && 'tallied'
   ].filter(n => n)
 
   // define the element returned by our component
@@ -50,10 +62,10 @@ export default function Incident(props: {
       </div>
 
       <div className="incident-controls">
-        <a title="Show Replay" onClick={ showReplay }>🎥</a>
-        { !props.incident.resolved && <a onClick={props.onTally} title="Tally Incident">➕</a> }
-        { !props.incident.resolved && <a onClick={props.onDismiss} title="Dismiss Incident">🙈</a> }
-        { props.incident.resolved && <a onClick={props.unresolve} title="Unresolve Incident">👀</a>}
+        <a title="Show Replay" onClick={ showReplay }>🔍</a>
+        { props.incident.resolution == undefined && <a onClick={ acknowledgeIncident } title="Tally Incident">✔️</a> }
+        { props.incident.resolution == undefined && <a onClick={ dismissIncident } title="Dismiss Incident">❌</a> }
+        { props.incident.resolution != undefined && <a onClick={ unresolveIncident } title="Unresolve Incident">↩️</a> }
       </div>
     </div>
 

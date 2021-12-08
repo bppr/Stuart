@@ -1,5 +1,14 @@
 import { Observer, CarState, AppState, Outbox } from "../state";
-import { IncidentData } from "../../common/index";
+import { IncidentDb } from "@app/incidentdb";
+
+/**
+ * MajorCrash describes a potentially hazardous track condition, where a full-course-yellow situation would be appropriate, including the time and place where the crash occurred.
+ */
+type MajorCrash = {
+    sessionTime: number,
+    sessionNum: number,
+    trackPositionPercent: number,
+}
 
 type MajorIncident = {
     car: CarState
@@ -12,13 +21,14 @@ type MajorIncident = {
     triggeredFCY: boolean;
 }
 
+/**
+ * MajorIncidentWatcher is an Observer that tries to detect extremely dangerous situations that should be cause for throwing a full-course-yellow.
+ * 
+ * It publishes a {@link MajorCrash} message to the provided outbox under the topic 'fcy' when a track incident becomes large enough to warrant intervention. Additionally, once 
+ */
 export class MajorIncidentWatcher implements Observer {
 
-    private outbox: Outbox;
-
-    constructor(outbox: Outbox) {
-        this.outbox = outbox;
-    }
+    constructor(private outbox: Outbox, private incidentDb: IncidentDb) {    }
 
     /**
      * If true, will consider any time a car goes off track to be a "major incident"
@@ -88,11 +98,10 @@ export class MajorIncidentWatcher implements Observer {
                         // add the original incident cars to the major incident (the new incident will be added later)
                         this.currentMajorIncidents = recentMajorIncidents;
 
-                        this.outbox.send<IncidentData>('incident', {
-                            car,
+                        this.outbox.send<MajorCrash>('fcy', {
                             sessionNum,
                             sessionTime,
-                            type: "major_crash"
+                            trackPositionPercent: car.currentLapPct
                         });
                     }
 
@@ -113,7 +122,7 @@ export class MajorIncidentWatcher implements Observer {
             // report incidents for everyone involved and end the current "major incident"
 
             this.currentMajorIncidents.forEach((inc) => {
-                this.outbox.send<IncidentData>('incident',{
+                this.incidentDb.publish({
                     car: inc.car,
                     sessionNum: inc.sessionNum,
                     sessionTime: inc.sessionTime,
