@@ -8,10 +8,8 @@ import Watcher, { Outbox } from './state';
 import { NotifyOfSessionChanged } from "./watchers/NotifyOfSessionChanged";
 import { IRacingIncidentCount } from "./watchers/NotifyOfIncident";
 import { OffTrackTimer } from './watchers/offtrack';
-import { PitBoxTimer } from './watchers/pitstop';
 import { MajorIncidentWatcher } from './watchers/fcy';
 import Application from './application';
-import { ReplayOutbox } from '@app/replay_outbox';
 
 import './ipc-inbox';
 
@@ -67,7 +65,6 @@ function startSDK(win: BrowserWindow) {
       new IRacingIncidentCount(incidentDb),
       new NotifyOfSessionChanged(outbox),
       new OffTrackTimer(incidentDb, 10, 2.0),
-      new PitBoxTimer(30),
       new MajorIncidentWatcher(outbox, incidentDb)
     ]
   }
