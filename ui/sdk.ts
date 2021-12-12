@@ -29,3 +29,7 @@ export function dismissIncident(id: number) {
 export function unresolveIncident(id: number) {
   window.api.unresolveIncident(id);
 }
+
+export function clearIncidents() {
+  window.api.clearIncidents();
+}

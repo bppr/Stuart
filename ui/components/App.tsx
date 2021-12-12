@@ -3,6 +3,7 @@ import _ from 'lodash';
 
 import sdk from '../sdk';
 import Incident from './Incident';
+import CarIncidents from './Car';
 import { Incident as BackendIncident } from '../../common/incident';
 
 
@@ -24,24 +25,14 @@ export function App() {
   // any time we call a setter here, getter is updated and App re-renders 
   // any child components with changed props also re-render
   const [incidents, setIncidents] = useState(INITIAL_INCIDENTS);
-  const [selectedCar, setSelectedCar] = useState<string | undefined>(undefined);
-
-  // if a car is selected, only show tallied incidents for that car
-  // else, show all incidents
-  const displayedIncidents = selectedCar
-    ? incidents.filter(i => i.data.car.number == selectedCar && i.resolution == 'Acknowledged')
-    : incidents;
-
-  // list of [carNumber, incidentCount][] for tallied incidents
-  const incidentsByCar = _(incidents)
-    .filter(i => i.resolution == 'Acknowledged')
-    .countBy('car.number')
-    .toPairs()
-    .sortBy(n => [n[1]])
 
   function listen() {
     sdk.receive('incident-created', (message: BackendIncident) => {
-      setIncidents(prev => [ message, ...prev]);
+      setIncidents((prev) => {
+        return [message, ...prev].filter((inc) => {
+          return inc.resolution != "Deleted";
+        });
+      });
     });
 
     sdk.receive('incident-resolved', (message: BackendIncident) => {
@@ -49,84 +40,57 @@ export function App() {
 
       setIncidents((prev) => {
         return prev.map((inc) => {
-          if(inc.id == message.id) {
+          if (inc.id == message.id) {
             return message;
           } else {
             return inc;
           }
-        })
+        }).filter((inc) => {
+          return inc.resolution != "Deleted";
+        });;
       });
     });
-  }
 
-  // return void function that selects car with given number, triggering re-render
-  // if given number is currently selected, clear selection (aka toggle)
-  function selectCar(number: string) {
-    return () => setSelectedCar(selectedCar !== number ? number : undefined);
+    sdk.connect();
   }
 
   // clear all incidents, triggering a re-render
   function clearIncidents() {
-    if(window.confirm("Are you sure? You should only do this when a session changes."))
-      setIncidents([])
+    if (window.confirm("Are you sure? You should only do this when a session changes."))
+      sdk.clearIncidents();
   }
 
   // only listen on the first render
   useEffect(listen, []);
 
+  const incidentsByCarNumber = _(incidents)
+    .groupBy(i => i.data.car.number)
+    .toPairs()
+    .sortBy(n => n[0]);
+
+
+  console.log("incidents by car number: " + JSON.stringify(incidentsByCarNumber));
+
   // define the element returned from our component
   return <div className="app-main">
     <section className="incidents">
       <h1>Incidents <button onClick={clearIncidents}>Clear</button></h1>
-
-      <p>
-        { 
-          selectedCar && 
-            <span>{`Showing only counted incidents for Car #${selectedCar} `}
-            <button onClick={() => setSelectedCar(undefined)}>Show All</button></span>
-        }
-        { !selectedCar && 'Showing all incidents' }
-      </p>
-
-      { 
-        displayedIncidents.map((incident, index) => <Incident
-          key={incident.id} 
+      {
+        incidents.map((incident, index) => <Incident
+          key={incident.id}
           incident={incident} />
         )
       }
     </section>
 
-    <section className="incident-counts">
-      <h1>Counts</h1>
+    <section className="drivers">
+      <h1>Drivers:</h1>
       {
-        incidentsByCar.map(([carNumber, incidentCount]) => <IncidentCount
-            key={carNumber}
-            isSelected={selectedCar === carNumber}
-            onSelectCar={selectCar(carNumber)}
-            carNumber={carNumber} 
-            incidentCount={incidentCount} />
-          )
+        incidentsByCarNumber.map(([num, incs]) => <CarIncidents
+          key={num}
+          incidents={incs} />
+        )
       }
     </section>
   </div>;
-}
-
-type IncidentCountProps = { 
-  carNumber: string
-  incidentCount: number
-  onSelectCar: () => void
-  isSelected: boolean 
-}
-
-// component for an incident count display for a given car
-// allows for selection filter via props.onSelectCar
-function IncidentCount({carNumber, incidentCount, isSelected, onSelectCar}: IncidentCountProps) {
-  const classes = `car-incident-count ${isSelected ? 'selected' : ''}`
-
-  // define the element returned from our component
-  return <div className={classes} onClick={onSelectCar}>
-    <h4>Car #{carNumber}</h4>
-    <h5>{incidentCount} Incidents</h5>
-    <h5 className="tip">{ isSelected ? 'Show All Cars' : 'Show Only This Car' }</h5>
-  </div>
 }

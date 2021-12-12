@@ -17,6 +17,9 @@ declare module 'node-irsdk-2021' {
     UserName: string
     CarNumber: string
     TeamIncidentCount: number
+    CarIsAI: number
+    CarIsPaceCar: number
+    UserID: number
   }
 
   interface SessionData {
@@ -28,7 +31,7 @@ declare module 'node-irsdk-2021' {
     }[]
   }
 
-  interface SessionData  {
+  interface SessionData {
     timestamp: Date
     data: {
       DriverInfo: {
@@ -47,14 +50,14 @@ declare module 'node-irsdk-2021' {
       }
     }
   }
-  
+
   export class SDKInstance {
     on(event: string, handler: (data: any) => void)
-    
+
     camControls: {
       switchToCar(carNumber: string): void
     }
-    
+
     playbackControls: {
       searchTs(sessionNumber: number, sessionTimeMS: number): void
     }

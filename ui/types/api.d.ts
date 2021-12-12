@@ -6,6 +6,8 @@ interface APIBridge {
   acknowledgeIncident(incidentId: number);
   dismissIncident(incidentId: number);
   unresolveIncident(incidentId: number);
+  clearIncidents();
+  connect();
 }
 
 interface WindowWithSDK extends Window {
