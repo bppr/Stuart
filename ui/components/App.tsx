@@ -63,15 +63,23 @@ export function App() {
   // only listen on the first render
   useEffect(listen, []);
 
-  const incidentsByCarNumber = _.groupBy(incidents, i => i.data.car.number);
-  console.log("incidents by car number: ", incidentsByCarNumber);
+  let acknowledgedIncidents = _.filter(incidents, i => i.resolution == "Acknowledged" || i.resolution == "Penalized")
+  let acknowledgedIncidentsByCarNumber = _.groupBy(acknowledgedIncidents, i => i.data.car.number);
+
+  let resolvedIncidents = incidents.filter((inc) => {
+    return inc.resolution != "Unresolved" && inc.resolution != "Deleted";
+  });
+
+  let unresolvedIncidents = incidents.filter((inc) => {
+    return inc.resolution == "Unresolved";
+  });
 
   // define the element returned from our component
   return <div className="app-main">
     <section className="incidents">
       <h1>Incidents <button onClick={clearIncidents}>Clear</button></h1>
       {
-        incidents.map((incident, index) => <Incident
+        unresolvedIncidents.map((incident) => <Incident
           key={incident.id}
           incident={incident} />
         )
@@ -81,9 +89,9 @@ export function App() {
     <section className="drivers">
       <h1>Drivers:</h1>
       {
-        Object.keys(incidentsByCarNumber).map(num => <CarIncidents
+        Object.keys(acknowledgedIncidentsByCarNumber).map(num => <CarIncidents
           key={num}
-          incidents={incidentsByCarNumber[num]} />
+          incidents={acknowledgedIncidentsByCarNumber[num]} />
         )
       }
     </section>

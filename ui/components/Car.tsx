@@ -1,5 +1,6 @@
 import React from 'react';
 
+import * as sdk from '../sdk';
 import { Incident, IncidentCar as Car } from '../../common/incident';
 import { getIncidentIcon } from './Incident';
 
@@ -34,22 +35,55 @@ export default function CarIncidents(props: {
 
     // return <p>:)</p>;
 
-       return <div>
-           <a title={collapsed ? "Expand" : "Collapse"} onClick={toggleExpander}>{collapsed ? "▶" : "▼"}</a>
-           {car.driverName + " (" + acknowledgedIncidents.length + ")"}
-           {!collapsed && createIncidentList(acknowledgedIncidents)}
-       </div>;
+    let childDivStyle = {
+        display: "block"
+    };
+    if (collapsed) {
+        childDivStyle.display = "none";
+    }
+
+    return <div className="carIncidents">
+        <a title={collapsed ? "Expand" : "Collapse"} onClick={toggleExpander}>{collapsed ? "▶" : "▼"}</a>
+        {car.driverName + " (" + acknowledgedIncidents.length + ")"}
+        <div style={childDivStyle}>
+            {
+                acknowledgedIncidents.map((inc) => <CarIncident
+                    key={inc.id}
+                    incident={inc} />
+                )
+            }
+        </div>
+    </div>;
 }
 
-function createIncidentList(incidents: Incident[]) {
-    return <div>
+function CarIncident(props: {
+    incident: Incident
+}) {
+    // call back to main process, which calls irsdk to jump to correct car/time
+    const showReplay = (ev: React.MouseEvent) => {
+        ev.preventDefault()
+        sdk.replay(props.incident.data)
+    }
+
+    const unresolveIncident = (ev: React.MouseEvent) => {
+        ev.preventDefault()
+        sdk.unresolveIncident(props.incident.id);
+    }
+
+    let inc = props.incident;
+    return <div className="carIncident">
         {
-            incidents.map((inc) => {
+            <div>
                 <p>{getIncidentIcon(inc) +
                     " " + inc.data.type +
                     " (Lap: " + inc.data.car.currentLap +
                     ")"}</p>
-            })
+                <div className="incident-controls">
+                    <a title="Show Replay" onClick={showReplay}>🔍</a>
+                    <a onClick={unresolveIncident} title="Unresolve Incident">↩️</a>
+                </div>
+            </div>
+
         }
     </div>;
 }
