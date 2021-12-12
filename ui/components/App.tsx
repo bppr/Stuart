@@ -63,13 +63,8 @@ export function App() {
   // only listen on the first render
   useEffect(listen, []);
 
-  const incidentsByCarNumber = _(incidents)
-    .groupBy(i => i.data.car.number)
-    .toPairs()
-    .sortBy(n => n[0]);
-
-
-  console.log("incidents by car number: " + JSON.stringify(incidentsByCarNumber));
+  const incidentsByCarNumber = _.groupBy(incidents, i => i.data.car.number);
+  console.log("incidents by car number: ", incidentsByCarNumber);
 
   // define the element returned from our component
   return <div className="app-main">
@@ -86,9 +81,9 @@ export function App() {
     <section className="drivers">
       <h1>Drivers:</h1>
       {
-        incidentsByCarNumber.map(([num, incs]) => <CarIncidents
+        Object.keys(incidentsByCarNumber).map(num => <CarIncidents
           key={num}
-          incidents={incs} />
+          incidents={incidentsByCarNumber[num]} />
         )
       }
     </section>

@@ -32,13 +32,13 @@ export default function CarIncidents(props: {
         setCollapsed(!collapsed);
     }
 
-    return <p>:)</p>;
+    // return <p>:)</p>;
 
-    //    return <div>
-    //        <a title={collapsed ? "Expand" : "Collapse"} onClick={toggleExpander}>{collapsed ? "▶" : "▼"}</a>
-    //        {car.driverName + " (" + acknowledgedIncidents.length + ")"}
-    //        {!collapsed && createIncidentList(acknowledgedIncidents)}
-    //    </div>;
+       return <div>
+           <a title={collapsed ? "Expand" : "Collapse"} onClick={toggleExpander}>{collapsed ? "▶" : "▼"}</a>
+           {car.driverName + " (" + acknowledgedIncidents.length + ")"}
+           {!collapsed && createIncidentList(acknowledgedIncidents)}
+       </div>;
 }
 
 function createIncidentList(incidents: Incident[]) {
