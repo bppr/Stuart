@@ -8,6 +8,18 @@ export interface Observer {
   onUpdate(prevState: AppState, newState: AppState): void
 }
 
+export type Driver = {
+  carIndex: number
+  name: string
+  userId: number
+  teamId: number
+  teamName: string
+  incidentCount: number
+  teamIncidentCount: number
+  isAi: boolean
+  isPaceCar: boolean
+}
+
 export type CarState = {
   index: number
   number: string
@@ -39,7 +51,7 @@ export type AppState = {
 }
 
 export default class Watcher {
-  constructor(private config: { observers: Observer[]}) { }
+  constructor(private config: { observers: Observer[] }) { }
 
   prevState: AppState = {
     sessionNum: 0,
@@ -83,19 +95,19 @@ export default class Watcher {
 
     const cars = DriverInfo.Drivers.map(dInfo => toCar(this.prevState, dInfo));
     const sessions = SessionInfo.Sessions.map(toSession);
-    
+
     const trackLengthDisplay = WeekendInfo.TrackLength;
     const trackLength = this.prevState.trackLengthDisplay === trackLengthDisplay
       ? this.prevState.trackLength
       : getTrackLength(update);
 
-    this.setState({ 
+    this.setState({
       ...this.prevState,
       trackLength,
       trackLengthDisplay,
-      cars, 
+      cars,
       sessions,
-      sessionType: sessions[this.prevState.sessionNum]?.type 
+      sessionType: sessions[this.prevState.sessionNum]?.type
     })
   }
 }
