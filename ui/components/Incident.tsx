@@ -3,6 +3,12 @@ import React from 'react';
 import * as sdk from '../sdk';
 import { Incident as BackendIncident, IncidentClass } from '../../common/incident';
 
+import { Card, CardHeader, ButtonGroup, Avatar, IconButton } from '@mui/material';
+import SearchIcon from '@mui/icons-material/Search';
+import ClearIcon from '@mui/icons-material/Clear';
+import CheckIcon from '@mui/icons-material/Check'
+
+
 // turns 0.78658 to 75.66%
 function formatPct(lapPct: number, decimals: number = 2) {
   const rounded = (lapPct * 100).toLocaleString('en-US', {
@@ -56,24 +62,29 @@ export default function Incident(props: {
 
   let icon = getIncidentIcon(props.incident);
 
-  // define the element returned by our component
-  return <div className={classNames.join(' ')}>
-    <div className="incident-header">
-      <div className="incident-deets">
-        <h2>{icon} Car #{car.number}{incidentType}</h2>
-      </div>
 
-      <div className="incident-controls">
-        <a title="Show Replay" onClick={showReplay}>🔍</a>
-        {!isResolved && <a onClick={acknowledgeIncident} title="Tally Incident">✔️</a>}
-        {!isResolved && <a onClick={dismissIncident} title="Dismiss Incident">❌</a>}
-        {isResolved && <a onClick={unresolveIncident} title="Unresolve Incident">↩️</a>}
-      </div>
-    </div>
-
-    <h5>Driver: {car.driverName}.</h5>
-  </div>
-
+  return <Card>
+    <CardHeader
+      avatar={
+        <Avatar sx={{ color: "black" }}>{getIncidentIcon(props.incident)}</Avatar>
+      }
+      title={props.incident.data.type}
+      subheader={"#" + car.number + " " + car.driverName}
+      action={
+        <ButtonGroup size="large">
+          <IconButton onClick={showReplay} title="Show in Replay">
+            <SearchIcon />
+          </IconButton>
+          <IconButton onClick={acknowledgeIncident} title="Acknowledge">
+            <CheckIcon />
+          </IconButton>
+          <IconButton onClick={dismissIncident} title="Dismiss">
+            <ClearIcon />
+          </IconButton>
+        </ButtonGroup>
+      }
+    />
+  </Card>
 
 }
 

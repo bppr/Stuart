@@ -7,6 +7,8 @@ import CarIncidents from './Car';
 import { Incident as BackendIncident } from '../../common/incident';
 import { ReplayTime } from '../../common/index';
 
+import { Grid, Stack, Typography } from "@mui/material";
+
 
 // return a copy of array with element at index replaced by supplied element
 function replace<T>(array: T[], index: number, element: T): T[] {
@@ -110,39 +112,31 @@ export function App() {
     // sdk.camLive();
   }
 
-  // define the element returned from our component
-  return <div className="app-main">
-    <div className="header">
-      <div className="clock">
-        <h1>Live: S{clock.liveSessionNum} {formatTime(clock.liveSessionTime)}</h1>
-        <h2>Camera: S{clock.camSessionNum} {formatTime(clock.camSessionTime)}</h2>
-        <h3>Watching: Car #{clock.camCarNumber} {clock.camDriverName}</h3>
-      </div>
-      <div className="replay-controls">
-        <a onClick={playPause}>⏯</a>
-        <a onClick={liveReplay}>⏭</a>
-      </div>
-    </div>
-    <div className="incident-view">
-      <section className="incidents">
-        <h1>Incidents <button onClick={clearIncidents}>Clear</button></h1>
+  return <Grid container spacing={2}>
+    <Grid item xs={4} sx={{ minWidth: 400 }}>
+      <Stack spacing={2}>
+        <Typography>Incident Feed</Typography>
         {
           unresolvedIncidents.map((incident) => <Incident
             key={incident.id}
             incident={incident} />
           )
         }
-      </section>
-
-      <section className="drivers">
-        <h1>Drivers:</h1>
+      </Stack>
+    </Grid>
+    <Grid item xs={4} sx={{ minWidth: 400 }}>
+      <Stack spacing={2}>
+        <Typography>Drivers</Typography>
         {
           Object.keys(acknowledgedIncidentsByCarNumber).map(num => <CarIncidents
             key={num}
             incidents={acknowledgedIncidentsByCarNumber[num]} />
           )
         }
-      </section>
-    </div>
-  </div>;
+      </Stack>
+    </Grid>
+    <Grid item xs={4}>
+
+    </Grid>
+  </Grid>
 }
