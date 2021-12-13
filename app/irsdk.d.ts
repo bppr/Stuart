@@ -4,6 +4,9 @@ declare module 'node-irsdk-2021' {
     values: {
       SessionNum: number
       SessionTime: number
+      ReplaySessionNum: number
+      ReplaySessionTime: number
+      CamCarIdx: number
       CarIdxLap: number[]
       CarIdxLapDistPct: number[]
       CarIdxOnPitRoad: boolean[]
@@ -51,6 +54,21 @@ declare module 'node-irsdk-2021' {
     }
   }
 
+  export class ReplaySearchMode {
+    static readonly ToStart = 0;
+    static readonly ToEnd = 1;
+    static readonly PrevSession = 2;
+    static readonly NextSession = 3;
+    static readonly PrevLap = 4;
+    static readonly NextLap = 5;
+    static readonly PrevFrame = 6;
+    static readonly NextFrame = 7;
+    static readonly PrevIncident = 8;
+    static readonly NextIncident = 9;
+
+    private constructor() { }
+  }
+
   export class SDKInstance {
     on(event: string, handler: (data: any) => void)
 
@@ -60,6 +78,7 @@ declare module 'node-irsdk-2021' {
 
     playbackControls: {
       searchTs(sessionNumber: number, sessionTimeMS: number): void
+      search(replaySearchMode: number): void
     }
   }
 

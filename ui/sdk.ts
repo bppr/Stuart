@@ -1,6 +1,6 @@
 // override / extend default window object
 
-import { IncidentData, Resolution } from "../common/incident";
+import { IncidentData } from "../common/incident";
 
 
 // see ui/types/api.d.ts

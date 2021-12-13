@@ -42,6 +42,9 @@ export enum SessionType {
 export type AppState = {
   sessionNum: number
   sessionTime: number         // seconds
+  replaySessionNum: number
+  replaySessionTime: number
+  camCarIdx: number
   sessions: Session[]
   trackLength: number         // meters
   trackLengthDisplay: string  // '0.9 mi' or '1.7 km'
@@ -56,6 +59,9 @@ export default class Watcher {
   prevState: AppState = {
     sessionNum: 0,
     sessionTime: 0,
+    replaySessionNum: 0,
+    replaySessionTime: 0,
+    camCarIdx: 0,
     sessions: [],
     trackLength: 1000,
     trackLengthDisplay: '1.0 km',
@@ -71,7 +77,10 @@ export default class Watcher {
 
   onTelemetryUpdate({ values }: TelemetryData) {
     const sessionNum = values.SessionNum,
-      sessionTime = values.SessionTime;
+      sessionTime = values.SessionTime,
+      replaySessionNum = values.ReplaySessionNum,
+      replaySessionTime = values.ReplaySessionTime,
+      camCarIdx = values.CamCarIdx;
 
     // use last tick's driver info
     // we can wait to observe any new drivers until after sessionInfo updates
@@ -87,7 +96,15 @@ export default class Watcher {
       }
     })
 
-    this.setState({ ...this.prevState, cars, sessionNum, sessionTime });
+    this.setState({
+      ...this.prevState,
+      cars,
+      sessionNum,
+      sessionTime,
+      replaySessionNum,
+      replaySessionTime,
+      camCarIdx
+    });
   }
 
   onSessionUpdate(update: SessionData) {
@@ -129,7 +146,7 @@ function getTrackLength(update: SessionData): number {
     return trackLength * (distanceUnit == "km" ? 1000 : 1609.344)
   }
 
-  return 0
+  return 0;
 }
 
 function toSession(session: SessionData): Session {

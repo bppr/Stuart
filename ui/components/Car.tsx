@@ -42,9 +42,9 @@ export default function CarIncidents(props: {
         childDivStyle.display = "none";
     }
 
-    return <div className="carIncidents">
-        <a title={collapsed ? "Expand" : "Collapse"} onClick={toggleExpander}>{collapsed ? "▶" : "▼"}</a>
-        {car.driverName + " (" + acknowledgedIncidents.length + ")"}
+    return <div className="car-incident-count">
+        <h2 className="incident-header"><a title={collapsed ? "Expand" : "Collapse"} onClick={toggleExpander}>{collapsed ? "▶" : "▼"}</a>
+            {car.driverName + " (" + acknowledgedIncidents.length + ")"}</h2>
         <div style={childDivStyle}>
             {
                 acknowledgedIncidents.map((inc) => <CarIncident
@@ -71,7 +71,7 @@ function CarIncident(props: {
     }
 
     let inc = props.incident;
-    return <div className="carIncident">
+    return <div className="incident">
         {
             <div>
                 <p>{getIncidentIcon(inc) +

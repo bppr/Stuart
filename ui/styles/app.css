@@ -72,14 +72,3 @@ body {
   margin: 0.2em;
 }
 
-.car-incident-count .tip {
-  opacity: 0.0;
-}
-
-.car-incident-count:hover .tip, .car-incident-count.selected .tip {
-  opacity: 0.5;
-}
-
-.car-incident-count:hover, .car-incident-count.selected {
-  background-color: bisque;
-}

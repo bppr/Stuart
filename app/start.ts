@@ -9,6 +9,7 @@ import { NotifyOfSessionChanged } from "./watchers/NotifyOfSessionChanged";
 import { IRacingIncidentCount } from "./watchers/NotifyOfIncident";
 import { OffTrackTimer } from './watchers/offtrack';
 import { MajorIncidentWatcher } from './watchers/fcy';
+import { Clock } from "./watchers/clock";
 import Application from './application';
 
 import './ipc-inbox';
@@ -65,7 +66,8 @@ function startSDK(win: BrowserWindow) {
       new IRacingIncidentCount(incidentDb),
       new NotifyOfSessionChanged(outbox),
       new OffTrackTimer(incidentDb, 10, 2.0),
-      new MajorIncidentWatcher(outbox, incidentDb)
+      new MajorIncidentWatcher(outbox, incidentDb),
+      new Clock(outbox)
     ]
   }
 
