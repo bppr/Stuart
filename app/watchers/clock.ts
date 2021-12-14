@@ -11,7 +11,7 @@ export class Clock implements Observer {
 
     private lastReportTime = 0;
 
-    constructor(private outbox: Outbox, private reportIntervalMs = 1000) {
+    constructor(private outbox: Outbox, private reportIntervalMs = 500) {
         if (this.reportIntervalMs < 0) {
             this.reportIntervalMs = 0;
         }
@@ -32,7 +32,7 @@ export class Clock implements Observer {
                 camSessionTime: newState.replaySessionTime,
                 camCarNumber: cameraCar?.number,
                 camDriverName: cameraCar?.driverName,
-                camPaused: false // TODO
+                camPaused: newState.camPaused
             });
 
         }

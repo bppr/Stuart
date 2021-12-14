@@ -30,7 +30,18 @@ contextBridge.exposeInMainWorld(
   },
   clearIncidents: () => {
     ipcRenderer.send('clear-incidents', {});
+  },
+  pauseReplay: () => {
+    ipcRenderer.send('replay-pause', {});
+  },
+  playReplay: () => {
+    ipcRenderer.send('replay-play', {});
+  },
+  liveReplay: () => {
+    ipcRenderer.send('replay-live', {});
   }
+
+
 
 }
 );

@@ -45,6 +45,7 @@ export type AppState = {
   replaySessionNum: number
   replaySessionTime: number
   camCarIdx: number
+  camPaused: boolean
   sessions: Session[]
   trackLength: number         // meters
   trackLengthDisplay: string  // '0.9 mi' or '1.7 km'
@@ -62,6 +63,7 @@ export default class Watcher {
     replaySessionNum: 0,
     replaySessionTime: 0,
     camCarIdx: 0,
+    camPaused: false,
     sessions: [],
     trackLength: 1000,
     trackLengthDisplay: '1.0 km',
@@ -80,7 +82,8 @@ export default class Watcher {
       sessionTime = values.SessionTime,
       replaySessionNum = values.ReplaySessionNum,
       replaySessionTime = values.ReplaySessionTime,
-      camCarIdx = values.CamCarIdx;
+      camCarIdx = values.CamCarIdx,
+      camPaused = values.ReplayPlaySpeed == 0;
 
     // use last tick's driver info
     // we can wait to observe any new drivers until after sessionInfo updates
@@ -103,7 +106,8 @@ export default class Watcher {
       sessionTime,
       replaySessionNum,
       replaySessionTime,
-      camCarIdx
+      camCarIdx,
+      camPaused
     });
   }
 

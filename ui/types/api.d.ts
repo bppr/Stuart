@@ -8,6 +8,9 @@ interface APIBridge {
   unresolveIncident(incidentId: number);
   clearIncidents();
   connect();
+  pauseReplay();
+  playReplay();
+  liveReplay();
 }
 
 interface WindowWithSDK extends Window {

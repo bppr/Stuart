@@ -117,7 +117,7 @@ export function App() {
   return <Stack spacing={4}>
     <Header time={clock} />
     <Grid container spacing={2}>
-      <Grid item xs={4} sx={{ minWidth: 400 }} spacing={2}>
+      <Grid item xs={4} sx={{ minWidth: 400 }}>
         <Stack spacing={2}>
           <Stack direction="row" alignItems="center" justifyContent="flex-start" spacing={2}>
             <Typography variant="h4">Incident Feed</Typography>
@@ -135,7 +135,7 @@ export function App() {
           }
         </Stack>
       </Grid>
-      <Grid item xs={4} sx={{ minWidth: 400 }}>
+      <Grid item xs={6} sx={{ minWidth: 400 }}>
         <Stack spacing={2}>
           <Typography variant="h4">Drivers</Typography>
           {
@@ -146,8 +146,11 @@ export function App() {
           }
         </Stack>
       </Grid>
-      <Grid item xs={4}>
-        <Typography variant="h4">Pacing Order (coming soon)</Typography>
+      <Grid item xs={2}>
+        <Stack>
+          <Typography variant="h4">Pacing Order</Typography>
+          <Typography variant="h6">(coming soon)</Typography>
+        </Stack>
       </Grid>
     </Grid>
   </Stack>

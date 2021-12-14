@@ -33,3 +33,15 @@ export function unresolveIncident(id: number) {
 export function clearIncidents() {
   window.api.clearIncidents();
 }
+
+export function pauseReplay() {
+  window.api.pauseReplay();
+}
+
+export function playReplay() {
+  window.api.playReplay();
+}
+
+export function liveReplay() {
+  window.api.liveReplay();
+}

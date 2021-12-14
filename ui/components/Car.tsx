@@ -39,7 +39,7 @@ export default function CarIncidents(props: {
 
     return <Accordion expanded={expanded} onChange={toggleExpander} >
         <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-            <Badge badgeContent={acknowledgedIncidents.length} color="primary">
+            <Badge badgeContent={acknowledgedIncidents.length} color="warning">
                 <Avatar>{car.number}</Avatar>
             </Badge>
             <Stack sx={{ marginLeft: 2 }}>

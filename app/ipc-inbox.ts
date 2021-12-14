@@ -54,3 +54,21 @@ ipcMain.on('clear-incidents', (ev, data: any) => {
     incidentDb.resolve(id, "Deleted");
   });
 });
+
+ipcMain.on('replay-pause', (ev, data: any) => {
+  console.log("INBOX: replay-pause");
+  const sdk = iracing.getInstance();
+  sdk.playbackControls.pause();
+});
+
+ipcMain.on('replay-play', (ev, data: any) => {
+  console.log("INBOX: replay-play");
+  const sdk = iracing.getInstance();
+  sdk.playbackControls.play();
+});
+
+ipcMain.on('replay-live', (ev, data: any) => {
+  console.log("INBOX: replay-live");
+  const sdk = iracing.getInstance();
+  sdk.playbackControls.search("ToEnd");
+});
