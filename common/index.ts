@@ -4,5 +4,6 @@ export type ReplayTime = {
     camSessionNum: number,
     camSessionTime: number,
     camDriverName: string,
-    camCarNumber: string
+    camCarNumber: string,
+    camPaused: boolean
 }

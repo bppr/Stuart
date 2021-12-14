@@ -4,11 +4,12 @@ import _ from 'lodash';
 import sdk from '../sdk';
 import Incident from './Incident';
 import CarIncidents from './Car';
+import Header from './Header';
 import { Incident as BackendIncident } from '../../common/incident';
 import { ReplayTime } from '../../common/index';
 
-import { Grid, Stack, Typography } from "@mui/material";
-
+import { Grid, Stack, Typography, IconButton } from "@mui/material";
+import CloseIcon from '@mui/icons-material/CancelOutlined';
 
 // return a copy of array with element at index replaced by supplied element
 function replace<T>(array: T[], index: number, element: T): T[] {
@@ -23,7 +24,8 @@ const DEFAULT_CLOCK: ReplayTime = {
   camSessionNum: 0,
   camSessionTime: 0,
   camCarNumber: "---",
-  camDriverName: "None"
+  camDriverName: "None",
+  camPaused: false
 }
 
 function formatTime(seconds: number) {
@@ -112,31 +114,41 @@ export function App() {
     // sdk.camLive();
   }
 
-  return <Grid container spacing={2}>
-    <Grid item xs={4} sx={{ minWidth: 400 }}>
-      <Stack spacing={2}>
-        <Typography>Incident Feed</Typography>
-        {
-          unresolvedIncidents.map((incident) => <Incident
-            key={incident.id}
-            incident={incident} />
-          )
-        }
-      </Stack>
+  return <Stack spacing={4}>
+    <Header time={clock} />
+    <Grid container spacing={2}>
+      <Grid item xs={4} sx={{ minWidth: 400 }} spacing={2}>
+        <Stack spacing={2}>
+          <Stack direction="row" alignItems="center" justifyContent="flex-start" spacing={2}>
+            <Typography variant="h4">Incident Feed</Typography>
+            <IconButton
+              title="Clear All Incidents"
+              onClick={clearIncidents}>
+              <CloseIcon sx={{ height: 32, width: 32 }} />
+            </IconButton>
+          </Stack>
+          {
+            unresolvedIncidents.map((incident) => <Incident
+              key={incident.id}
+              incident={incident} />
+            )
+          }
+        </Stack>
+      </Grid>
+      <Grid item xs={4} sx={{ minWidth: 400 }}>
+        <Stack spacing={2}>
+          <Typography variant="h4">Drivers</Typography>
+          {
+            Object.keys(acknowledgedIncidentsByCarNumber).map(num => <CarIncidents
+              key={num}
+              incidents={acknowledgedIncidentsByCarNumber[num]} />
+            )
+          }
+        </Stack>
+      </Grid>
+      <Grid item xs={4}>
+        <Typography variant="h4">Pacing Order (coming soon)</Typography>
+      </Grid>
     </Grid>
-    <Grid item xs={4} sx={{ minWidth: 400 }}>
-      <Stack spacing={2}>
-        <Typography>Drivers</Typography>
-        {
-          Object.keys(acknowledgedIncidentsByCarNumber).map(num => <CarIncidents
-            key={num}
-            incidents={acknowledgedIncidentsByCarNumber[num]} />
-          )
-        }
-      </Stack>
-    </Grid>
-    <Grid item xs={4}>
-
-    </Grid>
-  </Grid>
+  </Stack>
 }

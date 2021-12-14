@@ -31,7 +31,8 @@ export class Clock implements Observer {
                 camSessionNum: newState.replaySessionNum,
                 camSessionTime: newState.replaySessionTime,
                 camCarNumber: cameraCar?.number,
-                camDriverName: cameraCar?.driverName
+                camDriverName: cameraCar?.driverName,
+                camPaused: false // TODO
             });
 
         }
