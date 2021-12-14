@@ -4,13 +4,18 @@ import { Resolution } from "@common/incident";
 import Application from "@app/application";
 
 type CarNumberParam = { carNumber: string };
-type JumpToTimeParam = { sessionNum: number, sessionTime: number};
+type JumpToTimeParam = { sessionNum: number, sessionTime: number };
 type ReplayParam = CarNumberParam & JumpToTimeParam;
 
 type IncidentResolvedParam = {
-   incidentId: number,
-   resolution: Resolution
+  incidentId: number,
+  resolution: Resolution
 };
+
+ipcMain.on('connect-window', (ev, data: any) => {
+  console.log('connected to renderer');
+  Application.getInstance().addOutbox(ev.sender);
+});
 
 ipcMain.on('replay', (ev, data: ReplayParam) => {
   const sdk = iracing.getInstance();
@@ -29,16 +34,23 @@ ipcMain.on('jump-to-time', (ev, data: JumpToTimeParam) => {
 });
 
 ipcMain.on('acknowledge-incident', (ev, data: IncidentResolvedParam) => {
-  console.log("INBOX: " + 'acknowledge-incident '+ data.incidentId);
+  console.log("INBOX: " + 'acknowledge-incident ' + data.incidentId);
   Application.getInstance().incidents.resolve(data.incidentId, 'Acknowledged');
 });
 
 ipcMain.on('dismiss-incident', (ev, data: IncidentResolvedParam) => {
-  console.log("INBOX: " + 'dismiss-incident '+ data.incidentId);
+  console.log("INBOX: " + 'dismiss-incident ' + data.incidentId);
   Application.getInstance().incidents.resolve(data.incidentId, 'Dismissed');
 });
 
 ipcMain.on('unresolve-incident', (ev, data: IncidentResolvedParam) => {
-  console.log("INBOX: " + 'unresolve-incident '+ data.incidentId);
-  Application.getInstance().incidents.reopen(data.incidentId);
+  console.log("INBOX: " + 'unresolve-incident ' + data.incidentId);
+  Application.getInstance().incidents.resolve(data.incidentId, "Unresolved");
+});
+
+ipcMain.on('clear-incidents', (ev, data: any) => {
+  let incidentDb = Application.getInstance().incidents;
+  incidentDb.getIncidentResolutions().forEach((res, id) => {
+    incidentDb.resolve(id, "Deleted");
+  });
 });
