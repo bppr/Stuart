@@ -4,6 +4,10 @@ declare module 'node-irsdk-2021' {
     values: {
       SessionNum: number
       SessionTime: number
+      ReplaySessionNum: number
+      ReplaySessionTime: number
+      ReplayPlaySpeed: number
+      CamCarIdx: number
       CarIdxLap: number[]
       CarIdxLapDistPct: number[]
       CarIdxOnPitRoad: boolean[]
@@ -17,6 +21,9 @@ declare module 'node-irsdk-2021' {
     UserName: string
     CarNumber: string
     TeamIncidentCount: number
+    CarIsAI: number
+    CarIsPaceCar: number
+    UserID: number
   }
 
   interface SessionData {
@@ -28,7 +35,7 @@ declare module 'node-irsdk-2021' {
     }[]
   }
 
-  interface SessionData  {
+  interface SessionData {
     timestamp: Date
     data: {
       DriverInfo: {
@@ -47,16 +54,22 @@ declare module 'node-irsdk-2021' {
       }
     }
   }
-  
+
+  type RpySrchMode = "ToStart" | "ToEnd" | "PrevSession" | "NextSession" | "PrevLap" | "NextLap" | "PrevFrame" | "NextFrame" | "PrevIncident" | "NextIncident";
+
   export class SDKInstance {
     on(event: string, handler: (data: any) => void)
-    
+
     camControls: {
       switchToCar(carNumber: string): void
     }
-    
+
     playbackControls: {
       searchTs(sessionNumber: number, sessionTimeMS: number): void
+      search(replaySearchMode: RpySrchMode): void
+      //searchFrame(frame: number, replayPositionMode: number): void
+      play(): void
+      pause(): void
     }
   }
 

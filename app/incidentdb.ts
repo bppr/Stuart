@@ -10,7 +10,7 @@ import { Incident, IncidentData, Resolution } from "../common/incident";
  * 
  * Both messages use the {@link Incident} type as their data format.
  */
- export class IncidentDb {
+export class IncidentDb {
     private idCounter: number = 1;
     private incidents = new Map<number, Incident>();
     private outbox: Outbox;
@@ -27,14 +27,14 @@ import { Incident, IncidentData, Resolution } from "../common/incident";
     public publish(data: IncidentData): Incident {
         let incident: Incident = {
             id: (this.idCounter++),
-            resolution: undefined,
+            resolution: 'Unresolved',
             data
         };
 
         this.incidents.set(incident.id, incident);
 
         this.outbox.send<Incident>('incident-created', incident);
-        
+
         return incident;
     }
 
@@ -49,20 +49,33 @@ import { Incident, IncidentData, Resolution } from "../common/incident";
         return this.changeResolution(id, resolution);
     }
 
-    public reopen(id: number): void {
-        this.changeResolution(id, undefined);
-    }
-
-    private changeResolution(id:number, resolution?: Resolution): Resolution | undefined {
+    private changeResolution(id: number, resolution: Resolution): Resolution | undefined {
         let incident = this.incidents.get(id);
-        if(incident) {
-            if(!(incident.resolution)) {
-                incident.resolution = resolution;
-                this.incidents.set(incident.id, incident);
-                this.outbox.send<Incident>('incident-resolved', incident);
-                console.log('IN: resolving incident ' + incident.id + " = " + resolution);
-            }
+        if (incident) {
+            incident.resolution = resolution;
+            this.incidents.set(incident.id, incident);
+            this.outbox.send<Incident>('incident-resolved', incident);
+            console.log('IN: resolving incident ' + incident.id + " = " + resolution);
         }
         return incident?.resolution;
+    }
+
+    public getIncidentData(id: number): IncidentData | undefined {
+        let inc = this.incidents.get(id);
+        if (inc) {
+            return { ...inc.data };
+        } else {
+            return undefined;
+        }
+    }
+
+    public getIncidentResolutions(includeDeleted = false): Map<number, Resolution> {
+        let resolutions = new Map<number, Resolution>();
+        this.incidents.forEach((inc, id) => {
+            if (inc.resolution != "Deleted" || includeDeleted) {
+                resolutions.set(id, inc.resolution);
+            }
+        });
+        return resolutions;
     }
 }

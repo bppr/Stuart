@@ -1,6 +1,6 @@
 // override / extend default window object
 
-import { IncidentData, Resolution } from "../common/incident";
+import { IncidentData } from "../common/incident";
 
 
 // see ui/types/api.d.ts
@@ -28,4 +28,20 @@ export function dismissIncident(id: number) {
 
 export function unresolveIncident(id: number) {
   window.api.unresolveIncident(id);
+}
+
+export function clearIncidents() {
+  window.api.clearIncidents();
+}
+
+export function pauseReplay() {
+  window.api.pauseReplay();
+}
+
+export function playReplay() {
+  window.api.playReplay();
+}
+
+export function liveReplay() {
+  window.api.liveReplay();
 }
