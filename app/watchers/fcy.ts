@@ -28,7 +28,7 @@ type MajorIncident = {
  */
 export class MajorIncidentWatcher implements Observer {
 
-    constructor(private outbox: Outbox, private incidentDb: IncidentDb) { }
+    constructor(private outbox: Outbox, private incidentDb: IncidentDb) {    }
 
     /**
      * If true, will consider any time a car goes off track to be a "major incident"
@@ -126,7 +126,7 @@ export class MajorIncidentWatcher implements Observer {
                     car: inc.car,
                     sessionNum: inc.sessionNum,
                     sessionTime: inc.sessionTime,
-                    type: "Involved in Major Incident"
+                    type: "participant_in_major_crash"
                 });
             });
 

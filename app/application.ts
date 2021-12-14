@@ -1,5 +1,4 @@
 import { IncidentDb } from './incidentdb';
-import { ReplayOutbox } from './replay_outbox';
 import { Outbox } from './state';
 
 /**
@@ -9,29 +8,25 @@ export default class Application {
 
     public readonly incidents: IncidentDb;
 
-    private readonly outbox: ReplayOutbox;
-
-    constructor() {
-        this.outbox = new ReplayOutbox;
-        this.incidents = new IncidentDb(this.outbox);
+    constructor(private outbox: Outbox) {
+        this.incidents = new IncidentDb(outbox);
     }
 
     static instance: Application;
 
-    public addOutbox(outbox: Outbox, replayEvents = true) {
-        this.outbox.addOutbox(outbox, replayEvents);
+    public static initialize(outbox: Outbox) {
+        if(Application.instance) {
+            throw "Application already initialized";
+        } else {
+            Application.instance = new Application(outbox);
+        }
     }
-
-    public getOutbox(): Outbox {
-        return this.outbox;
-    }
-
+    
     public static getInstance(): Application {
-        if (Application.instance) {
+        if(Application.instance) {
             return Application.instance;
         } else {
-            Application.instance = new Application();
-            return Application.instance;
+            throw "Application not initialized"
         }
     }
 }

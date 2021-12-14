@@ -3,9 +3,7 @@ import _ from 'lodash';
 
 import sdk from '../sdk';
 import Incident from './Incident';
-import CarIncidents from './Car';
 import { Incident as BackendIncident } from '../../common/incident';
-import { ReplayTime } from '../../common/index';
 
 
 // return a copy of array with element at index replaced by supplied element
@@ -15,26 +13,6 @@ function replace<T>(array: T[], index: number, element: T): T[] {
 
 // use ./test-utils/TEST_INCIDENT for ui work
 const INITIAL_INCIDENTS: BackendIncident[] = [];
-const DEFAULT_CLOCK: ReplayTime = {
-  liveSessionNum: 0,
-  liveSessionTime: 0,
-  camSessionNum: 0,
-  camSessionTime: 0,
-  camCarNumber: "---",
-  camDriverName: "None"
-}
-
-function formatTime(seconds: number) {
-  seconds = Math.round(seconds);
-  let hours = (seconds / (60 * 60)) | 0;
-  seconds -= (hours * 60 * 60);
-  let minutes = (seconds / 60) | 0;
-  seconds -= minutes * 60
-
-  return hours + ":" +
-    (minutes.toString().padStart(2, "0")) + ":" +
-    (seconds.toString().padStart(2, "0"));
-}
 
 // App - the main UI component - takes no props
 // has state for incidents and selected car - re-renders on state changes
@@ -46,15 +24,24 @@ export function App() {
   // any time we call a setter here, getter is updated and App re-renders 
   // any child components with changed props also re-render
   const [incidents, setIncidents] = useState(INITIAL_INCIDENTS);
-  const [clock, setClock] = useState(DEFAULT_CLOCK);
+  const [selectedCar, setSelectedCar] = useState<string | undefined>(undefined);
+
+  // if a car is selected, only show tallied incidents for that car
+  // else, show all incidents
+  const displayedIncidents = selectedCar
+    ? incidents.filter(i => i.data.car.number == selectedCar && i.resolution == 'Acknowledged')
+    : incidents;
+
+  // list of [carNumber, incidentCount][] for tallied incidents
+  const incidentsByCar = _(incidents)
+    .filter(i => i.resolution == 'Acknowledged')
+    .countBy('car.number')
+    .toPairs()
+    .sortBy(n => [n[1]])
 
   function listen() {
     sdk.receive('incident-created', (message: BackendIncident) => {
-      setIncidents((prev) => {
-        return [message, ...prev].filter((inc) => {
-          return inc.resolution != "Deleted";
-        });
-      });
+      setIncidents(prev => [ message, ...prev]);
     });
 
     sdk.receive('incident-resolved', (message: BackendIncident) => {
@@ -62,87 +49,84 @@ export function App() {
 
       setIncidents((prev) => {
         return prev.map((inc) => {
-          if (inc.id == message.id) {
+          if(inc.id == message.id) {
             return message;
           } else {
             return inc;
           }
-        }).filter((inc) => {
-          return inc.resolution != "Deleted";
-        });;
+        })
       });
     });
+  }
 
-    sdk.receive('clock-update', (message: ReplayTime) => {
-      setClock((prev) => message);
-    })
-
-    sdk.connect();
+  // return void function that selects car with given number, triggering re-render
+  // if given number is currently selected, clear selection (aka toggle)
+  function selectCar(number: string) {
+    return () => setSelectedCar(selectedCar !== number ? number : undefined);
   }
 
   // clear all incidents, triggering a re-render
   function clearIncidents() {
-    if (window.confirm("Are you sure? You should only do this when a session changes."))
-      sdk.clearIncidents();
+    if(window.confirm("Are you sure? You should only do this when a session changes."))
+      setIncidents([])
   }
 
   // only listen on the first render
   useEffect(listen, []);
 
-  let acknowledgedIncidents = _.filter(incidents, i => i.resolution == "Acknowledged" || i.resolution == "Penalized")
-  let acknowledgedIncidentsByCarNumber = _.groupBy(acknowledgedIncidents, i => i.data.car.number);
-
-  let resolvedIncidents = incidents.filter((inc) => {
-    return inc.resolution != "Unresolved" && inc.resolution != "Deleted";
-  });
-
-  let unresolvedIncidents = incidents.filter((inc) => {
-    return inc.resolution == "Unresolved";
-  });
-
-  const playPause = (ev: React.MouseEvent) => {
-    ev.preventDefault();
-    // sdk.camPlayToggle();
-  }
-
-  const liveReplay = (ev: React.MouseEvent) => {
-    ev.preventDefault();
-    // sdk.camLive();
-  }
-
   // define the element returned from our component
   return <div className="app-main">
-    <div className="header">
-      <div className="clock">
-        <h1>Live: S{clock.liveSessionNum} {formatTime(clock.liveSessionTime)}</h1>
-        <h2>Camera: S{clock.camSessionNum} {formatTime(clock.camSessionTime)}</h2>
-        <h3>Watching: Car #{clock.camCarNumber} {clock.camDriverName}</h3>
-      </div>
-      <div className="replay-controls">
-        <a onClick={playPause}>⏯</a>
-        <a onClick={liveReplay}>⏭</a>
-      </div>
-    </div>
-    <div className="incident-view">
-      <section className="incidents">
-        <h1>Incidents <button onClick={clearIncidents}>Clear</button></h1>
-        {
-          unresolvedIncidents.map((incident) => <Incident
-            key={incident.id}
-            incident={incident} />
-          )
-        }
-      </section>
+    <section className="incidents">
+      <h1>Incidents <button onClick={clearIncidents}>Clear</button></h1>
 
-      <section className="drivers">
-        <h1>Drivers:</h1>
-        {
-          Object.keys(acknowledgedIncidentsByCarNumber).map(num => <CarIncidents
-            key={num}
-            incidents={acknowledgedIncidentsByCarNumber[num]} />
-          )
+      <p>
+        { 
+          selectedCar && 
+            <span>{`Showing only counted incidents for Car #${selectedCar} `}
+            <button onClick={() => setSelectedCar(undefined)}>Show All</button></span>
         }
-      </section>
-    </div>
+        { !selectedCar && 'Showing all incidents' }
+      </p>
+
+      { 
+        displayedIncidents.map((incident, index) => <Incident
+          key={incident.id} 
+          incident={incident} />
+        )
+      }
+    </section>
+
+    <section className="incident-counts">
+      <h1>Counts</h1>
+      {
+        incidentsByCar.map(([carNumber, incidentCount]) => <IncidentCount
+            key={carNumber}
+            isSelected={selectedCar === carNumber}
+            onSelectCar={selectCar(carNumber)}
+            carNumber={carNumber} 
+            incidentCount={incidentCount} />
+          )
+      }
+    </section>
   </div>;
+}
+
+type IncidentCountProps = { 
+  carNumber: string
+  incidentCount: number
+  onSelectCar: () => void
+  isSelected: boolean 
+}
+
+// component for an incident count display for a given car
+// allows for selection filter via props.onSelectCar
+function IncidentCount({carNumber, incidentCount, isSelected, onSelectCar}: IncidentCountProps) {
+  const classes = `car-incident-count ${isSelected ? 'selected' : ''}`
+
+  // define the element returned from our component
+  return <div className={classes} onClick={onSelectCar}>
+    <h4>Car #{carNumber}</h4>
+    <h5>{incidentCount} Incidents</h5>
+    <h5 className="tip">{ isSelected ? 'Show All Cars' : 'Show Only This Car' }</h5>
+  </div>
 }

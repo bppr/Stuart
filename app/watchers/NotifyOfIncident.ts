@@ -19,7 +19,7 @@ export class IRacingIncidentCount implements Observer {
         const { index, number, teamName, driverName, incidentCount, currentLap, currentLapPct } = current!;
         const car = { index, number, teamName, driverName, incidentCount, currentLap, currentLapPct };
 
-        this.incidentDb.publish({ car, sessionNum, sessionTime, type: "Incident Count" });
+        this.incidentDb.publish({ car, sessionNum, sessionTime, type: 'incident_counter' });
       });
   }
 }

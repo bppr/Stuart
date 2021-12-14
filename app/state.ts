@@ -8,18 +8,6 @@ export interface Observer {
   onUpdate(prevState: AppState, newState: AppState): void
 }
 
-export type Driver = {
-  carIndex: number
-  name: string
-  userId: number
-  teamId: number
-  teamName: string
-  incidentCount: number
-  teamIncidentCount: number
-  isAi: boolean
-  isPaceCar: boolean
-}
-
 export type CarState = {
   index: number
   number: string
@@ -42,9 +30,6 @@ export enum SessionType {
 export type AppState = {
   sessionNum: number
   sessionTime: number         // seconds
-  replaySessionNum: number
-  replaySessionTime: number
-  camCarIdx: number
   sessions: Session[]
   trackLength: number         // meters
   trackLengthDisplay: string  // '0.9 mi' or '1.7 km'
@@ -54,14 +39,11 @@ export type AppState = {
 }
 
 export default class Watcher {
-  constructor(private config: { observers: Observer[] }) { }
+  constructor(private config: { observers: Observer[]}) { }
 
   prevState: AppState = {
     sessionNum: 0,
     sessionTime: 0,
-    replaySessionNum: 0,
-    replaySessionTime: 0,
-    camCarIdx: 0,
     sessions: [],
     trackLength: 1000,
     trackLengthDisplay: '1.0 km',
@@ -77,10 +59,7 @@ export default class Watcher {
 
   onTelemetryUpdate({ values }: TelemetryData) {
     const sessionNum = values.SessionNum,
-      sessionTime = values.SessionTime,
-      replaySessionNum = values.ReplaySessionNum,
-      replaySessionTime = values.ReplaySessionTime,
-      camCarIdx = values.CamCarIdx;
+      sessionTime = values.SessionTime;
 
     // use last tick's driver info
     // we can wait to observe any new drivers until after sessionInfo updates
@@ -96,15 +75,7 @@ export default class Watcher {
       }
     })
 
-    this.setState({
-      ...this.prevState,
-      cars,
-      sessionNum,
-      sessionTime,
-      replaySessionNum,
-      replaySessionTime,
-      camCarIdx
-    });
+    this.setState({ ...this.prevState, cars, sessionNum, sessionTime });
   }
 
   onSessionUpdate(update: SessionData) {
@@ -112,19 +83,19 @@ export default class Watcher {
 
     const cars = DriverInfo.Drivers.map(dInfo => toCar(this.prevState, dInfo));
     const sessions = SessionInfo.Sessions.map(toSession);
-
+    
     const trackLengthDisplay = WeekendInfo.TrackLength;
     const trackLength = this.prevState.trackLengthDisplay === trackLengthDisplay
       ? this.prevState.trackLength
       : getTrackLength(update);
 
-    this.setState({
+    this.setState({ 
       ...this.prevState,
       trackLength,
       trackLengthDisplay,
-      cars,
+      cars, 
       sessions,
-      sessionType: sessions[this.prevState.sessionNum]?.type
+      sessionType: sessions[this.prevState.sessionNum]?.type 
     })
   }
 }
@@ -146,7 +117,7 @@ function getTrackLength(update: SessionData): number {
     return trackLength * (distanceUnit == "km" ? 1000 : 1609.344)
   }
 
-  return 0;
+  return 0
 }
 
 function toSession(session: SessionData): Session {

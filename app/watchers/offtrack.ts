@@ -14,7 +14,6 @@ export class OffTrackTimer extends CarTimer {
 
 	public reportOffTracks: boolean = true;
 	public reportUnsafeRejoins: boolean = true;
-	public reportTrackLimits = true;
 
 	/**
 	 * The distance (in meters) to search forward and backward for other cars
@@ -47,21 +46,12 @@ export class OffTrackTimer extends CarTimer {
 	onStateExited(car: CarState, time: number, timeExceeded: boolean, app: AppState): void {
 
 		//console.log("DOT: " + timeExceeded);
+
+		// no need to check if it was a small off-track
+		if (!timeExceeded) return;
+
 		// if car was reset or disappeared, no worries
 		if (car.trackSurface != "OnTrack") return;
-
-		const { sessionNum, sessionTime } = app;
-
-		// no need to check for rejoins if it was a small off-track
-		if (!timeExceeded && this.reportTrackLimits) {
-			let otTime = Math.max(0, sessionTime - this.getTimeLimit());
-			this.incidentDb.publish({
-				car,
-				sessionNum,
-				sessionTime: otTime,
-				type: 'Track Limits'
-			});
-		};
 
 		// search forward for other cars
 		let searchDistancePct = this.dangerousRejoinDistance / app.trackLength;
@@ -74,14 +64,16 @@ export class OffTrackTimer extends CarTimer {
 					car.currentLapPct + searchDistancePct);
 		}, this);
 
-		if (carsNearby.length > 0 && this.reportUnsafeRejoins) {
+		if (carsNearby.length > 0) {
 			let carNames = carsNearby.map((car) => car.driverName);
 			let carList = carNames.join(", ");
 
 			//console.log("OT: " + car.driverName + " rejoined the track within " + 
 			//    this.dangerousRejoinDistance + " meters of " + carList + ".");
 
+			const { sessionNum, sessionTime } = app;
 			this.incidentDb.publish({ car, sessionNum, sessionTime, type: 'Unsafe Rejoin' });
+
 		}
 	}
 
