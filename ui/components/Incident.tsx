@@ -8,18 +8,6 @@ import SearchIcon from '@mui/icons-material/Search';
 import ClearIcon from '@mui/icons-material/Clear';
 import CheckIcon from '@mui/icons-material/Check'
 
-
-// turns 0.78658 to 75.66%
-function formatPct(lapPct: number, decimals: number = 2) {
-  const rounded = (lapPct * 100).toLocaleString('en-US', {
-    maximumSignificantDigits: 2 + decimals
-  })
-
-  return `${rounded}%`
-}
-
-type IncidentHandler = () => void
-
 // a component for displaying an incident
 // allows tally/dismiss/resolve via props.onTally, props.onDismiss, props.onResolve
 // prop: incident, a record for an incident including its resolution state
@@ -27,9 +15,6 @@ export default function Incident(props: {
   incident: BackendIncident
 }) {
   const car = props.incident.data.car;
-  const incidentType = props.incident.data.type ? `: ${props.incident.data.type}` : ''
-
-  const isResolved = props.incident.resolution != "Unresolved";
 
   // call back to main process, which calls irsdk to jump to correct car/time
   const showReplay = (ev: React.MouseEvent) => {
@@ -51,17 +36,6 @@ export default function Incident(props: {
     ev.preventDefault()
     sdk.unresolveIncident(props.incident.id);
   }
-
-  // compute classes for element styling (see styles/app.css)
-  // filter conditional values
-  const classNames = [
-    'incident',
-    isResolved && 'resolved',
-    props.incident.resolution == 'Acknowledged' && 'tallied'
-  ].filter(n => n)
-
-  let icon = getIncidentIcon(props.incident);
-
 
   return <Card>
     <CardHeader

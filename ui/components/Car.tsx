@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 import * as sdk from '../sdk';
 import { Incident, IncidentCar as Car } from '../../common/incident';
@@ -10,105 +10,102 @@ import SearchIcon from '@mui/icons-material/Search';
 
 // Displays a list of incidents for a specific driver
 
-export default function CarIncidents(props: {
-    incidents: Incident[]
-}) {
+export default function CarIncidents(props: { incidents: Incident[]}) {
+  const [expanded, setExpanded] = useState(false);
 
-    let [expanded, setExpanded] = React.useState(false);
-    let [showDismissed, setShowDismissed] = React.useState(false);
+  const car = props.incidents[0].data.car;
+  const incidents = props.incidents;
 
-    let car = props.incidents[0].data.car;
+  // sort by timestamp (i.e., sessionNum first, then sessionTime)
+  incidents.sort((a, b) => {
+    const sessionDiff = a.data.sessionNum - b.data.sessionNum;
+    if (sessionDiff !== 0) 
+        return sessionDiff;
+      
+    return a.data.sessionTime - b.data.sessionTime;
+  });
 
-    let incidents = props.incidents;
-    incidents
-        .sort((a, b) => {
-            // sort by timestamp (i.e., sessionNum first, then sessionTime)
+  const acknowledgedIncidents = incidents.filter((inc) => inc.resolution === "Acknowledged");
+  const toggleAccordion = (_: any, newVal: boolean) => setExpanded(newVal)
 
-            let comp1 = a.data.sessionNum - b.data.sessionNum;
-            if (comp1 != 0) return comp1;
-            return a.data.sessionTime - b.data.sessionTime;
-        });
+  return <Accordion expanded={expanded} onChange={toggleAccordion} >
+    <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+      <Badge badgeContent={acknowledgedIncidents.length} color="warning">
+        <Avatar>{car.number}</Avatar>
+      </Badge>
+      <Stack sx={{ marginLeft: 2 }}>
+        <Typography variant="subtitle2">{car.driverName}</Typography>
+        <Typography sx={{ color: "secondary" }} variant="caption">{"Team: " + car.teamName}</Typography>
+      </Stack>
+    </AccordionSummary>
 
-    let acknowledgedIncidents = incidents.filter(
-        (inc) => inc.resolution == "Acknowledged");
-
-    const toggleExpander =
-        (event: React.SyntheticEvent, newExpanded: boolean) => {
-            setExpanded(newExpanded);
-        };
-
-    return <Accordion expanded={expanded} onChange={toggleExpander} >
-        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-            <Badge badgeContent={acknowledgedIncidents.length} color="warning">
-                <Avatar>{car.number}</Avatar>
-            </Badge>
-            <Stack sx={{ marginLeft: 2 }}>
-                <Typography variant="subtitle2">{car.driverName}</Typography>
-                <Typography sx={{ color: "secondary" }} variant="caption">{"Team: " + car.teamName}</Typography>
-            </Stack>
-        </AccordionSummary>
-        <AccordionDetails>
-            <List>
-                {
-                    acknowledgedIncidents.map((inc) => <CarIncident
-                        key={inc.id}
-                        incident={inc} />
-                    )
-                }
-            </List>
-        </AccordionDetails>
-    </Accordion>
+    <AccordionDetails>
+      <List>
+      {
+        acknowledgedIncidents.map(inc => <CarIncident
+          key={inc.id}
+          incident={inc} />
+        )
+      }
+      </List>
+    </AccordionDetails>
+  </Accordion>
 }
 
-function CarIncident(props: {
-    incident: Incident
-}) {
+
+function formatPct(lapPct: number, decimals: number = 2) {
+  const rounded = (lapPct * 100).toLocaleString('en-US', {
+    maximumSignificantDigits: 2 + decimals
+  })
+
+  return `${rounded}%`
+}
+
+function CarIncident(props: { incident: Incident}) {
     // call back to main process, which calls irsdk to jump to correct car/time
     const showReplay = (ev: React.MouseEvent) => {
-        ev.preventDefault()
-        sdk.replay(props.incident.data)
+      ev.preventDefault()
+      sdk.replay(props.incident.data)
     }
 
     const unresolveIncident = (ev: React.MouseEvent) => {
-        ev.preventDefault()
-        sdk.unresolveIncident(props.incident.id);
+      ev.preventDefault()
+      sdk.unresolveIncident(props.incident.id);
     }
 
-    let inc = props.incident;
+    const inc = props.incident;
 
     return <ListItem
-        secondaryAction={
-            <ButtonGroup size="large">
-                <IconButton edge="end"
-                    onClick={showReplay}
-                    title="Show in Replay">
-                    <SearchIcon />
-                </IconButton>
-                <IconButton edge="end"
-                    onClick={unresolveIncident}
-                    title="Undo">
-                    <UndoIcon />
-                </IconButton>
-            </ButtonGroup>
-        }>
+      secondaryAction={
+        <ButtonGroup size="large">
+          <IconButton edge="end" onClick={showReplay} title="Show in Replay">
+            <SearchIcon />
+          </IconButton>
+
+          <IconButton edge="end" onClick={unresolveIncident} title="Undo">
+            <UndoIcon />
+          </IconButton>
+        </ButtonGroup>}
+      >
         <ListItemIcon>
-            <Avatar sx={{ color: "black", width: 32, height: 32 }}>{getIncidentIcon(inc)}</Avatar>
+          <Avatar sx={{ color: "black", width: 32, height: 32 }}>{ getIncidentIcon(inc) }</Avatar>
         </ListItemIcon>
+        
         <ListItemText
-            primary={inc.data.type}
-            secondary={
-                <React.Fragment>
-                    <Typography
-                        sx={{ display: 'inline' }}
-                        component="span"
-                        variant="body2"
-                        color="text.primary"
-                    >
-                        Lap: {inc.data.car.currentLap}
-                    </Typography>
-                    {inc.data.description != undefined ? inc.data.description : ""}
-                </React.Fragment>
-            }
+          primary={inc.data.type}
+          secondary={
+            <React.Fragment>
+              <Typography
+                sx={{ display: 'inline' }}
+                component="span"
+                variant="body2"
+                color="text.primary"
+              >
+                Lap: {inc.data.car.currentLap} / {formatPct(inc.data.car.currentLapPct)}
+              </Typography>
+              { inc.data.description && inc.data.description }
+            </React.Fragment>
+          }
         />
     </ListItem>
 

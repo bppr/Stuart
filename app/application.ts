@@ -12,7 +12,7 @@ export default class Application {
     private readonly outbox: ReplayOutbox;
 
     constructor() {
-        this.outbox = new ReplayOutbox;
+        this.outbox = new ReplayOutbox();
         this.incidents = new IncidentDb(this.outbox);
     }
 

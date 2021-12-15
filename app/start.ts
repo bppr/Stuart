@@ -50,6 +50,7 @@ function startSDK(win: BrowserWindow) {
 
   let consoleOutbox: Outbox = {
     send: (channel, data) => {
+      if(channel === 'clock-update') return;
       console.log('O (' + channel + '): ' + JSON.stringify(data));
     }
   }

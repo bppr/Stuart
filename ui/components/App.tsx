@@ -54,10 +54,13 @@ export function App() {
 
   function listen() {
     sdk.receive('incident-created', (message: BackendIncident) => {
+      console.log('incident', message);
+      
       setIncidents((prev) => {
-        return [message, ...prev].filter((inc) => {
-          return inc.resolution != "Deleted";
-        });
+        if(prev.find(({id}) => id === message.id))
+          return prev;
+
+        return [message, ...prev].filter(inc => inc.resolution !== "Deleted");
       });
     });
 
@@ -71,16 +74,11 @@ export function App() {
           } else {
             return inc;
           }
-        }).filter((inc) => {
-          return inc.resolution != "Deleted";
-        });;
+        }).filter((inc) => inc.resolution !== "Deleted");
       });
     });
 
-    sdk.receive('clock-update', (message: ReplayTime) => {
-      setClock((prev) => message);
-    })
-
+    sdk.receive('clock-update', (message: ReplayTime) => setClock(message));
     sdk.connect();
   }
 
@@ -146,12 +144,12 @@ export function App() {
           }
         </Stack>
       </Grid>
-      <Grid item xs={2}>
+      {/* <Grid item xs={2}>
         <Stack>
           <Typography variant="h4">Pacing Order</Typography>
           <Typography variant="h6">(coming soon)</Typography>
         </Stack>
-      </Grid>
+      </Grid> */}
     </Grid>
   </Stack>
 }
