@@ -42,10 +42,7 @@ export default function CarIncidents(props: { incidents: Incident[]}) {
     <AccordionDetails>
       <List>
       {
-        acknowledgedIncidents.map(inc => <CarIncident
-          key={inc.id}
-          incident={inc} />
-        )
+        acknowledgedIncidents.map(inc => <CarIncident key={inc.id} incident={inc} />)
       }
       </List>
     </AccordionDetails>
