@@ -49,13 +49,21 @@ export class IncidentDb {
         return this.changeResolution(id, resolution);
     }
 
+    public clearAll(): void {
+        this.incidents.forEach((inc, id) => {
+            if (inc.resolution != "Deleted") {
+                this.changeResolution(inc.id, "Deleted");
+            }
+        })
+    }
+
     private changeResolution(id: number, resolution: Resolution): Resolution | undefined {
         let incident = this.incidents.get(id);
         if (incident) {
             incident.resolution = resolution;
             this.incidents.set(incident.id, incident);
             this.outbox.send<Incident>('incident-resolved', incident);
-            console.log('IN: resolving incident ' + incident.id + " = " + resolution);
+            //console.log('IN: resolving incident ' + incident.id + " = " + resolution);
         }
         return incident?.resolution;
     }

@@ -22,7 +22,7 @@ export default class Application {
         this.outbox.addOutbox(outbox, replayEvents);
     }
 
-    public getOutbox(): Outbox {
+    public getOutbox(): ReplayOutbox {
         return this.outbox;
     }
 

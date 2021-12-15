@@ -52,7 +52,6 @@ export class OffTrackTimer extends CarTimer {
 
 		const { sessionNum, sessionTime } = app;
 
-		// no need to check for rejoins if it was a small off-track
 		if (!timeExceeded && this.reportTrackLimits) {
 			let otTime = Math.max(0, sessionTime - this.getTimeLimit());
 			this.incidentDb.publish({
@@ -63,25 +62,29 @@ export class OffTrackTimer extends CarTimer {
 			});
 		};
 
-		// search forward for other cars
-		let searchDistancePct = this.dangerousRejoinDistance / app.trackLength;
-		let carIdx = car.index;
 
-		let carsNearby = app.cars.filter((c) => {
-			return c.index != carIdx &&
-				insideTrackRange(c.currentLapPct,
-					car.currentLapPct - searchDistancePct,
-					car.currentLapPct + searchDistancePct);
-		}, this);
+		// no need to check for rejoins if it was a small off-track
+		if (timeExceeded) {
+			// search forward for other cars
+			let searchDistancePct = this.dangerousRejoinDistance / app.trackLength;
+			let carIdx = car.index;
 
-		if (carsNearby.length > 0 && this.reportUnsafeRejoins) {
-			let carNames = carsNearby.map((car) => car.driverName);
-			let carList = carNames.join(", ");
+			let carsNearby = app.cars.filter((c) => {
+				return c.index != carIdx &&
+					insideTrackRange(c.currentLapPct,
+						car.currentLapPct - searchDistancePct,
+						car.currentLapPct + searchDistancePct);
+			}, this);
 
-			//console.log("OT: " + car.driverName + " rejoined the track within " + 
-			//    this.dangerousRejoinDistance + " meters of " + carList + ".");
+			if (carsNearby.length > 0 && this.reportUnsafeRejoins) {
+				let carNames = carsNearby.map((car) => car.driverName);
+				let carList = carNames.join(", ");
 
-			this.incidentDb.publish({ car, sessionNum, sessionTime, type: 'Unsafe Rejoin' });
+				//console.log("OT: " + car.driverName + " rejoined the track within " + 
+				//    this.dangerousRejoinDistance + " meters of " + carList + ".");
+
+				this.incidentDb.publish({ car, sessionNum, sessionTime, type: 'Unsafe Rejoin' });
+			}
 		}
 	}
 

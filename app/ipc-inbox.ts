@@ -50,9 +50,7 @@ ipcMain.on('unresolve-incident', (ev, data: IncidentResolvedParam) => {
 
 ipcMain.on('clear-incidents', (ev, data: any) => {
   let incidentDb = Application.getInstance().incidents;
-  incidentDb.getIncidentResolutions().forEach((res, id) => {
-    incidentDb.resolve(id, "Deleted");
-  });
+  incidentDb.clearAll();
 });
 
 ipcMain.on('replay-pause', (ev, data: any) => {

@@ -2,13 +2,13 @@ import React, { useEffect, useState } from 'react';
 import _ from 'lodash';
 
 import sdk from '../sdk';
-import Incident from './Incident';
+import Incident from './UIIncident';
 import CarIncidents from './Car';
 import Header from './Header';
 import { Incident as BackendIncident } from '../../common/incident';
 import { ReplayTime } from '../../common/index';
 
-import { Grid, Stack, Typography, IconButton } from "@mui/material";
+import { Grid, Stack, Typography, IconButton, FormControlLabel, FormGroup, Switch } from "@mui/material";
 import CloseIcon from '@mui/icons-material/CancelOutlined';
 
 // return a copy of array with element at index replaced by supplied element
@@ -52,10 +52,23 @@ export function App() {
   const [incidents, setIncidents] = useState(INITIAL_INCIDENTS);
   const [clock, setClock] = useState(DEFAULT_CLOCK);
 
+  let [showDismissed, setShowDismissed] = React.useState(false);
+  let [groupByType, setGroupByType] = React.useState(false);
+
+  const toggleShowDismissed =
+    (event: React.SyntheticEvent, checked: boolean) => {
+      setShowDismissed(checked);
+    };
+
+  const toggleGroupByType =
+    (event: React.SyntheticEvent, checked: boolean) => {
+      setGroupByType(checked);
+    };
+
   function listen() {
     sdk.receive('incident-created', (message: BackendIncident) => {
       setIncidents((prev) => {
-        return [message, ...prev].filter((inc) => {
+        return [...prev, message].filter((inc) => {
           return inc.resolution != "Deleted";
         });
       });
@@ -93,26 +106,16 @@ export function App() {
   // only listen on the first render
   useEffect(listen, []);
 
-  let acknowledgedIncidents = _.filter(incidents, i => i.resolution == "Acknowledged" || i.resolution == "Penalized")
-  let acknowledgedIncidentsByCarNumber = _.groupBy(acknowledgedIncidents, i => i.data.car.number);
-
   let resolvedIncidents = incidents.filter((inc) => {
-    return inc.resolution != "Unresolved" && inc.resolution != "Deleted";
+    return inc.resolution == "Acknowledged" ||
+      inc.resolution == "Penalized" ||
+      (inc.resolution == "Dismissed" && showDismissed);
   });
+  let resolvedIncidentsByCarNumber = _.groupBy(resolvedIncidents, i => i.data.car.number);
 
   let unresolvedIncidents = incidents.filter((inc) => {
     return inc.resolution == "Unresolved";
   });
-
-  const playPause = (ev: React.MouseEvent) => {
-    ev.preventDefault();
-    // sdk.camPlayToggle();
-  }
-
-  const liveReplay = (ev: React.MouseEvent) => {
-    ev.preventDefault();
-    // sdk.camLive();
-  }
 
   return <Stack spacing={4}>
     <Header time={clock} />
@@ -138,10 +141,15 @@ export function App() {
       <Grid item xs={6} sx={{ minWidth: 400 }}>
         <Stack spacing={2}>
           <Typography variant="h4">Drivers</Typography>
+          <FormGroup>
+            <FormControlLabel control={<Switch onChange={toggleShowDismissed} checked={showDismissed} />} label="Show dismissed incidents" />
+            <FormControlLabel control={<Switch onChange={toggleGroupByType} checked={groupByType} />} label="Group by Incident Type" />
+          </FormGroup>
           {
-            Object.keys(acknowledgedIncidentsByCarNumber).map(num => <CarIncidents
+            Object.keys(resolvedIncidentsByCarNumber).map(num => <CarIncidents
               key={num}
-              incidents={acknowledgedIncidentsByCarNumber[num]} />
+              incidents={resolvedIncidentsByCarNumber[num]}
+              groupByType={groupByType} />
             )
           }
         </Stack>

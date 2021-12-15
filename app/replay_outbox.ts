@@ -29,6 +29,11 @@ export class ReplayOutbox {
         };
 
         this.messages.push(message);
+        this.sendTransient(channel, data);
+    }
+
+    // sends a message but does not save it for replay later
+    public sendTransient<T>(channel: string, data: T): void {
         this.outboxes.forEach((outbox) => {
             outbox.send<T>(channel, data);
         });

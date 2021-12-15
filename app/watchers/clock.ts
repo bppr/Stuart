@@ -1,6 +1,6 @@
-import { NumberLiteralType } from 'typescript';
-import { Observer, AppState, CarState, Outbox } from '../state';
+import { Observer, AppState } from '../state';
 import { ReplayTime } from '../../common/index';
+import { ReplayOutbox } from '@app/replay_outbox';
 
 
 /**
@@ -11,7 +11,7 @@ export class Clock implements Observer {
 
     private lastReportTime = 0;
 
-    constructor(private outbox: Outbox, private reportIntervalMs = 500) {
+    constructor(private outbox: ReplayOutbox, private reportIntervalMs = 125) {
         if (this.reportIntervalMs < 0) {
             this.reportIntervalMs = 0;
         }
@@ -25,7 +25,7 @@ export class Clock implements Observer {
 
             let cameraCar = newState.cars[newState.camCarIdx];
 
-            this.outbox.send<ReplayTime>("clock-update", {
+            this.outbox.sendTransient<ReplayTime>("clock-update", {
                 liveSessionNum: newState.sessionNum,
                 liveSessionTime: newState.sessionTime,
                 camSessionNum: newState.replaySessionNum,
