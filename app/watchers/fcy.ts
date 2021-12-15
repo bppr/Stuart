@@ -1,5 +1,5 @@
 import { Observer, CarState, AppState, Outbox } from "../state";
-import { IncidentDb } from "@app/incidentdb";
+import { IncidentDb } from "../incidentdb";
 
 /**
  * MajorCrash describes a potentially hazardous track condition, where a full-course-yellow situation would be appropriate, including the time and place where the crash occurred.

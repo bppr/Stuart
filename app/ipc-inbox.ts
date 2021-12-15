@@ -1,7 +1,7 @@
 import { ipcMain } from 'electron';
 import iracing from 'node-irsdk-2021';
-import { Resolution } from "@common/incident";
-import Application from "@app/application";
+import { Resolution } from "../common/incident";
+import Application from "./application";
 
 type CarNumberParam = { carNumber: string };
 type JumpToTimeParam = { sessionNum: number, sessionTime: number };
