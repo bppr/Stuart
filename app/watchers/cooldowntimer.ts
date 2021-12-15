@@ -58,11 +58,11 @@ export abstract class CooldownTimer implements Observer {
                         started: newApp.sessionTime,
                         ended: undefined
                     };
-                    console.log("CT3: start");
+                    //                    console.log("CT3: start");
                 } else {
                     // restart it
                     carTime.started = newApp.sessionTime;
-                    console.log("CT3: re-start");
+                    //                    console.log("CT3: re-start");
                 }
                 this.timesByCarIdx.set(car.index, carTime);
             }
@@ -78,7 +78,7 @@ export abstract class CooldownTimer implements Observer {
                 carTime!.ended = newApp.sessionTime;
 
                 this.timesByCarIdx.set(car.index, carTime);
-                console.log("CT3: stop");
+                //                console.log("CT3: stop");
             }
 
             // check to see if cooldown is up
@@ -89,7 +89,7 @@ export abstract class CooldownTimer implements Observer {
                         carTime.maximum,
                         carTime.cumulative);
                     this.timesByCarIdx.delete(car.index);
-                    console.log("CT3: done");
+                    //                    console.log("CT3: done");
                 }
             }
 

@@ -1,5 +1,5 @@
 import { AppState, CarState } from "../state";
-import { CooldownTimer } from "./cartimer3";
+import { CooldownTimer } from "./cooldowntimer";
 import { IncidentDb } from "../incidentdb"
 
 /**

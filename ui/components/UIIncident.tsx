@@ -76,7 +76,7 @@ export default function Incident(props: {
   let icon = getIncidentIcon(props.incident);
 
 
-  return <Card>
+  return <Card sx={{ marginBottom: 0 }}>
     <CardHeader
       avatar={
         <Avatar sx={{ color: "black" }}>{getIncidentIcon(props.incident)}</Avatar>
@@ -117,7 +117,7 @@ export default function Incident(props: {
           <Typography>{formatTime(props.incident.data.sessionTime)}</Typography>
         </Grid>
         <Grid item xs={12}>
-          <Slider size="small" disabled defaultValue={100 * props.incident.data.car.currentLapPct} />
+          <Slider size="small" sx={{ margin: 0, padding: 0 }} disabled defaultValue={100 * props.incident.data.car.currentLapPct} />
         </Grid>
       </Grid>
     </CardContent>

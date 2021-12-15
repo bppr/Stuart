@@ -56,23 +56,23 @@ export default function CarIncidents(props: {
             </Stack>
         </AccordionSummary>
         <AccordionDetails>
-            {
-                groupByType ||
-                displayedIncidents.map((inc) => <Incident
-                    key={inc.id}
-                    incident={inc} />
-                )
-            }
-            {
-                groupByType &&
-                Object.keys(displayedIncidentsByType).map((incType) => {
-                    let incs = displayedIncidentsByType[incType];
+            <Stack spacing={1}>
+                {
+                    (!groupByType) ?
+                        displayedIncidents.map((inc) => <Incident
+                            key={"car-incs-all." + car.number + "." + inc.id}
+                            incident={inc} />
+                        )
+                        :
+                        Object.keys(displayedIncidentsByType).map((incType) => {
+                            let incs = displayedIncidentsByType[incType];
 
-                    return <GroupedIncidents
-                        key={incType}
-                        incs={incs} />
-                })
-            }
+                            return <GroupedIncidents
+                                key={"car-incs-type." + car.number + "." + incType}
+                                incs={incs} />
+                        })
+                }
+            </Stack>
         </AccordionDetails>
     </Accordion>
 }
@@ -93,7 +93,7 @@ function GroupedIncidents(props: {
             <Typography sx={{ marginLeft: 2 }}>{incType}</Typography>
         </AccordionSummary>
         <AccordionDetails>
-            <List>
+            <List sx={{ padding: 0 }}>
                 {
                     incs.map((i) => {
                         return <MiniIncidentListItem
@@ -121,27 +121,25 @@ function MiniIncidentListItem(props: {
     }
 
     let inc = props.incident;
-    return <ListItem
-        secondaryAction={
-            <ButtonGroup size="large">
-                <IconButton edge="end"
-                    onClick={showReplay}
-                    title="Show in Replay">
-                    <SearchIcon />
-                </IconButton>
-                <IconButton edge="end"
-                    onClick={unresolveIncident}
-                    title="Undo">
-                    <UndoIcon />
-                </IconButton>
-            </ButtonGroup>
-        }>
+    return <ListItem sx={{ height: 20 }}>
         <ListItemText
             primary={
                 <React.Fragment>
                     <Stack direction="row">
                         <Typography sx={{ width: 64 }}>Lap {inc.data.car.currentLap}</Typography>
                         <Slider size="small" disabled defaultValue={100 * inc.data.car.currentLapPct} />
+                        <ButtonGroup size="large">
+                            <IconButton edge="end"
+                                onClick={showReplay}
+                                title="Show in Replay">
+                                <SearchIcon />
+                            </IconButton>
+                            <IconButton edge="end"
+                                onClick={unresolveIncident}
+                                title="Undo">
+                                <UndoIcon />
+                            </IconButton>
+                        </ButtonGroup>
                     </Stack>
                 </React.Fragment>
             }

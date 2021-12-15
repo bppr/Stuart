@@ -121,7 +121,7 @@ export function App() {
     <Header time={clock} />
     <Grid container spacing={2}>
       <Grid item xs={4} sx={{ minWidth: 400 }}>
-        <Stack spacing={2}>
+        <Stack spacing={1}>
           <Stack direction="row" alignItems="center" justifyContent="flex-start" spacing={2}>
             <Typography variant="h4">Incident Feed</Typography>
             <IconButton
@@ -132,14 +132,14 @@ export function App() {
           </Stack>
           {
             unresolvedIncidents.map((incident) => <Incident
-              key={incident.id}
+              key={"incfeed." + incident.id}
               incident={incident} />
             )
           }
         </Stack>
       </Grid>
       <Grid item xs={6} sx={{ minWidth: 400 }}>
-        <Stack spacing={2}>
+        <Stack spacing={1}>
           <Typography variant="h4">Drivers</Typography>
           <FormGroup>
             <FormControlLabel control={<Switch onChange={toggleShowDismissed} checked={showDismissed} />} label="Show dismissed incidents" />
@@ -147,7 +147,7 @@ export function App() {
           </FormGroup>
           {
             Object.keys(resolvedIncidentsByCarNumber).map(num => <CarIncidents
-              key={num}
+              key={"car-incs." + num}
               incidents={resolvedIncidentsByCarNumber[num]}
               groupByType={groupByType} />
             )
