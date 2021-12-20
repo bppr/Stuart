@@ -33,8 +33,9 @@ export class IncidentDb {
 
         this.incidents.set(incident.id, incident);
 
-        this.outbox.send<Incident>('incident-created', incident);
 
+        this.outbox.send<Incident>('incident-created', incident);
+        //console.log("INC: " + JSON.stringify(incident));
         return incident;
     }
 

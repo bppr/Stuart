@@ -36,7 +36,7 @@ type IncidentHandler = () => void
 // a component for displaying an incident
 // allows tally/dismiss/resolve via props.onTally, props.onDismiss, props.onResolve
 // prop: incident, a record for an incident including its resolution state
-export default function Incident(props: {
+const Incident = React.memo(function (props: {
   incident: BackendIncident
 }) {
   const car = props.incident.data.car;
@@ -123,7 +123,9 @@ export default function Incident(props: {
     </CardContent>
   </Card>
 
-}
+});
+
+export default Incident;
 
 export function getIncidentIcon(incident: BackendIncident) {
   let icon = "🚨";

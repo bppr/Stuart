@@ -13,7 +13,7 @@ import Incident from './UIIncident';
 
 // Displays a list of incidents for a specific driver
 
-export default function CarIncidents(props: {
+const CarIncidents = React.memo(function (props: {
     incidents: BackendIncident[],
     groupByType: boolean
 }) {
@@ -75,7 +75,7 @@ export default function CarIncidents(props: {
             </Stack>
         </AccordionDetails>
     </Accordion>
-}
+});
 
 function GroupedIncidents(props: {
     incs: BackendIncident[]
@@ -213,3 +213,5 @@ function CarIncident(props: {
     //        }
     //    </div>;
 }
+
+export default CarIncidents;
