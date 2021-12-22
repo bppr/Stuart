@@ -4,11 +4,21 @@ import * as sdk from '../sdk';
 import { Incident as BackendIncident, IncidentClass } from '../../common/incident';
 
 import { Card, CardHeader, CardContent, Grid, Slider, Typography, ButtonGroup, Avatar, IconButton } from '@mui/material';
+import { styled } from '@mui/material/styles';
 import SearchIcon from '@mui/icons-material/Search';
 import ClearIcon from '@mui/icons-material/Clear';
 import CheckIcon from '@mui/icons-material/Check';
 import UndoIcon from '@mui/icons-material/Undo';
 import { formatTime } from '../clock';
+
+const CardContentNoPadding = styled(CardContent)(`
+  padding-top: 0px;
+  padding-left: 16px;
+  padding-right: 16px;
+  &:last-child {
+    padding-bottom: 16px;
+  }
+`);
 
 // a component for displaying an incident
 // allows tally/dismiss/resolve via props.onTally, props.onDismiss, props.onResolve
@@ -45,7 +55,7 @@ const Incident = React.memo(function (props: {
         <Avatar sx={{ color: "black" }} alt={props.incident.data.type}>{getIncidentIcon(props.incident)}</Avatar>
       }
       title={`#${car.number} ${car.driverName}`}
-      subheader={[props.incident.data.type, '/', formatTime(props.incident.data.sessionTime)].join(' ')}
+      subheader={[props.incident.data.type].join(' ')}
       action={
         <ButtonGroup size="large">
           <IconButton onClick={showReplay} title="Show in Replay">
@@ -68,22 +78,19 @@ const Incident = React.memo(function (props: {
         </ButtonGroup>
       }
     />
-    <CardContent>
-      <Grid container spacing={0}>
-        <Grid item xs={4}>
+    <CardContentNoPadding>
+      <Grid container spacing={0} sx={{ marginBottom: 0, marginTop: 1, padding: 0 }}>
+        <Grid item xs={2}>
           <Typography>Lap {props.incident.data.car.currentLap}</Typography>
         </Grid>
-        <Grid item xs={4}>
-          <Typography>Session {props.incident.data.sessionNum}</Typography>
-        </Grid>
-        <Grid item xs={4}>
-          <Typography>{formatTime(props.incident.data.sessionTime)}</Typography>
-        </Grid>
-        <Grid item xs={12}>
+        <Grid item xs={7}>
           <Slider size="small" sx={{ margin: 0, padding: 0 }} disabled defaultValue={100 * props.incident.data.car.currentLapPct} />
         </Grid>
+        <Grid item xs={3}>
+          <Typography sx={{ textAlign: "right" }}>{formatTime(props.incident.data.sessionTime)}</Typography>
+        </Grid>
       </Grid>
-    </CardContent>
+    </CardContentNoPadding>
   </Card>
 
 });
