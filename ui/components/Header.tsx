@@ -2,23 +2,12 @@ import React from 'react';
 import { ReplayTime } from '../../common/index'
 import * as sdk from '../sdk';
 
+import { formatTime } from '../clock';
+
 import { Stack, Typography, IconButton } from '@mui/material';
 import SkipNextIcon from '@mui/icons-material/SkipNext';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import PauseIcon from '@mui/icons-material/Pause';
-
-function formatTime(seconds: number) {
-    seconds = Math.round(seconds);
-    let hours = (seconds / (60 * 60)) | 0;
-    seconds -= hours * 60 * 60;
-    let minutes = (seconds / 60) | 0;
-    seconds -= minutes * 60;
-
-    return hours + ":" +
-        minutes.toString().padStart(2, '0') + ":" +
-        seconds.toString().padStart(2, '0');
-}
-
 
 export default function Header(props: {
     time: ReplayTime

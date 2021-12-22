@@ -60,7 +60,7 @@ export function App() {
         if(prev.find(({id}) => id === message.id))
           return prev;
 
-        return [message, ...prev].filter(inc => inc.resolution !== "Deleted");
+        return [...prev, message].filter(inc => inc.resolution !== "Deleted");
       });
     });
 

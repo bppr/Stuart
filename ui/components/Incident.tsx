@@ -7,6 +7,7 @@ import { Card, CardHeader, ButtonGroup, Avatar, IconButton } from '@mui/material
 import SearchIcon from '@mui/icons-material/Search';
 import ClearIcon from '@mui/icons-material/Clear';
 import CheckIcon from '@mui/icons-material/Check'
+import { formatTime } from '../clock';
 
 // a component for displaying an incident
 // allows tally/dismiss/resolve via props.onTally, props.onDismiss, props.onResolve
@@ -40,10 +41,10 @@ export default function Incident(props: {
   return <Card>
     <CardHeader
       avatar={
-        <Avatar sx={{ color: "black" }}>{getIncidentIcon(props.incident)}</Avatar>
+        <Avatar sx={{ color: "black" }} alt={props.incident.data.type}>{ getIncidentIcon(props.incident) }</Avatar>
       }
-      title={props.incident.data.type}
-      subheader={"#" + car.number + " " + car.driverName}
+      title={`#${car.number} ${car.driverName}`}
+      subheader={[props.incident.data.type, '/', formatTime(props.incident.data.sessionTime)].join(' ')}
       action={
         <ButtonGroup size="large">
           <IconButton onClick={showReplay} title="Show in Replay">
