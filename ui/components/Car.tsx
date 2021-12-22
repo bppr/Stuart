@@ -5,11 +5,12 @@ import * as sdk from '../sdk';
 
 import { Incident as BackendIncident, } from '../../common/incident';
 import { getIncidentIcon } from './UIIncident';
-import { Accordion, AccordionDetails, AccordionSummary, List, Avatar, Badge, Typography, Slider, FormControlLabel, FormGroup, Switch, IconButton, ListItem, ListItemIcon, ListItemText, ButtonGroup, Stack } from '@mui/material';
+import { Accordion, AccordionDetails, AccordionSummary, List, Avatar, Badge, Typography, Slider, Grid, IconButton, ListItem, ListItemIcon, ListItemText, ButtonGroup, Stack } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import UndoIcon from '@mui/icons-material/Undo';
 import SearchIcon from '@mui/icons-material/Search';
 import Incident from './UIIncident';
+import { formatTime } from '../clock';
 
 // Displays a list of incidents for a specific driver
 
@@ -125,21 +126,28 @@ function MiniIncidentListItem(props: {
         <ListItemText
             primary={
                 <React.Fragment>
-                    <Stack direction="row">
-                        <Typography sx={{ width: 64 }}>Lap {inc.data.car.currentLap}</Typography>
-                        <Slider size="small" disabled defaultValue={100 * inc.data.car.currentLapPct} />
-                        <ButtonGroup size="large">
-                            <IconButton edge="end"
-                                onClick={showReplay}
-                                title="Show in Replay">
-                                <SearchIcon />
-                            </IconButton>
-                            <IconButton edge="end"
-                                onClick={unresolveIncident}
-                                title="Undo">
-                                <UndoIcon />
-                            </IconButton>
-                        </ButtonGroup>
+                    <Stack direction="row" alignItems="center">
+                        <Grid container direction="row" spacing={0} sx={{ margin: 0, padding: 0 }} alignItems="center">
+                            <Grid item xs={2}>
+                                <Typography>Lap {props.incident.data.car.currentLap}</Typography>
+                            </Grid>
+                            <Grid item xs={7}>
+                                <Slider size="small" sx={{ margin: 0, padding: 0 }} disabled defaultValue={100 * props.incident.data.car.currentLapPct} />
+                            </Grid>
+                            <Grid item xs={3}>
+                                <Typography sx={{ textAlign: "right" }}>{formatTime(props.incident.data.sessionTime)}</Typography>
+                            </Grid>
+                        </Grid>
+                        <IconButton edge="end"
+                            onClick={showReplay}
+                            title="Show in Replay">
+                            <SearchIcon />
+                        </IconButton>
+                        <IconButton edge="end"
+                            onClick={unresolveIncident}
+                            title="Undo">
+                            <UndoIcon />
+                        </IconButton>
                     </Stack>
                 </React.Fragment>
             }

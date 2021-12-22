@@ -136,7 +136,7 @@ export function App() {
           }
         </Stack>
       </Grid>
-      <Grid item xs={5} sx={{ minWidth: 400 }}>
+      <Grid item xs={5} sx={{ minWidth: 500 }}>
         <Stack spacing={1}>
           <Typography variant="h4">Drivers</Typography>
           <FormGroup>
