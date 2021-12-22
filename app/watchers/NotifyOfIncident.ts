@@ -1,4 +1,4 @@
-import { IncidentDb } from '@app/incidentdb';
+import { IncidentDb } from '../incidentdb';
 import { Observer, AppState } from '../state';
 
 /**

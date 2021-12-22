@@ -1,7 +1,7 @@
 import { CarState, AppState, } from '../state';
 import { CarTimer } from './cartimer';
-import { IncidentDb } from '@app/incidentdb';
-import { insideTrackRange } from "@app/util";
+import { IncidentDb } from '../incidentdb';
+import { insideTrackRange } from "../util";
 
 /**
  * OffTrackTimer is a {@link CarTimer} that publishes an incident if the car has been off track for more than a short period of time.

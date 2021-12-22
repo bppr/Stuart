@@ -8,30 +8,7 @@ import SearchIcon from '@mui/icons-material/Search';
 import ClearIcon from '@mui/icons-material/Clear';
 import CheckIcon from '@mui/icons-material/Check';
 import UndoIcon from '@mui/icons-material/Undo';
-
-
-// turns 0.78658 to 75.66%
-function formatPct(lapPct: number, decimals: number = 2) {
-  const rounded = (lapPct * 100).toLocaleString('en-US', {
-    maximumSignificantDigits: 2 + decimals
-  })
-
-  return `${rounded}%`
-}
-
-function formatTime(seconds: number) {
-  seconds = Math.round(seconds);
-  let hours = (seconds / (60 * 60)) | 0;
-  seconds -= hours * 60 * 60;
-  let minutes = (seconds / 60) | 0;
-  seconds -= minutes * 60;
-
-  return hours + ":" +
-    minutes.toString().padStart(2, '0') + ":" +
-    seconds.toString().padStart(2, '0');
-}
-
-type IncidentHandler = () => void
+import { formatTime } from '../clock';
 
 // a component for displaying an incident
 // allows tally/dismiss/resolve via props.onTally, props.onDismiss, props.onResolve
@@ -40,9 +17,6 @@ const Incident = React.memo(function (props: {
   incident: BackendIncident
 }) {
   const car = props.incident.data.car;
-  const incidentType = props.incident.data.type ? `: ${props.incident.data.type}` : ''
-
-  const isResolved = props.incident.resolution != "Unresolved";
 
   // call back to main process, which calls irsdk to jump to correct car/time
   const showReplay = (ev: React.MouseEvent) => {
@@ -65,24 +39,13 @@ const Incident = React.memo(function (props: {
     sdk.unresolveIncident(props.incident.id);
   }
 
-  // compute classes for element styling (see styles/app.css)
-  // filter conditional values
-  const classNames = [
-    'incident',
-    isResolved && 'resolved',
-    props.incident.resolution == 'Acknowledged' && 'tallied'
-  ].filter(n => n)
-
-  let icon = getIncidentIcon(props.incident);
-
-
-  return <Card sx={{ marginBottom: 0 }}>
+  return <Card>
     <CardHeader
       avatar={
-        <Avatar sx={{ color: "black" }}>{getIncidentIcon(props.incident)}</Avatar>
+        <Avatar sx={{ color: "black" }} alt={props.incident.data.type}>{getIncidentIcon(props.incident)}</Avatar>
       }
-      title={props.incident.data.type}
-      subheader={"#" + car.number + " " + car.driverName}
+      title={`#${car.number} ${car.driverName}`}
+      subheader={[props.incident.data.type, '/', formatTime(props.incident.data.sessionTime)].join(' ')}
       action={
         <ButtonGroup size="large">
           <IconButton onClick={showReplay} title="Show in Replay">
