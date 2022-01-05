@@ -66,7 +66,6 @@ function startSDK(win: BrowserWindow) {
     observers: [
       new IRacingIncidentCount(incidentDb),
       new NotifyOfSessionChanged(outbox),
-      new OffTrackTimer(incidentDb, 10, 2.0),
       new MajorIncidentWatcher(outbox, incidentDb),
       new Clock(outbox)
     ]
