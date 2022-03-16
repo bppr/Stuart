@@ -2,14 +2,18 @@ import React, { useEffect, useState } from 'react';
 import _ from 'lodash';
 
 import sdk from '../sdk';
-import Incident from './Incident';
+import IncidentView from './Incident';
 import CarIncidents from './Car';
 import Header from './Header';
-import { Incident as BackendIncident } from '../../common/incident';
-import { ReplayTime } from '../../common/index';
+import Pacing from './Pacing';
+import TelemetryViewer from './TelemetryViewer';
 
-import { Grid, Stack, Typography, IconButton } from "@mui/material";
+import { IncidentData, Incident } from '../../common/incident';
+import { ClockState } from '../../common/ClockState';
+
+import { Grid, Stack, Typography, IconButton, Tabs, Tab } from "@mui/material";
 import CloseIcon from '@mui/icons-material/CancelOutlined';
+
 
 // return a copy of array with element at index replaced by supplied element
 function replace<T>(array: T[], index: number, element: T): T[] {
@@ -17,16 +21,24 @@ function replace<T>(array: T[], index: number, element: T): T[] {
 }
 
 // use ./test-utils/TEST_INCIDENT for ui work
-const INITIAL_INCIDENTS: BackendIncident[] = [];
-const DEFAULT_CLOCK: ReplayTime = {
-  liveSessionNum: 0,
-  liveSessionTime: 0,
-  camSessionNum: 0,
-  camSessionTime: 0,
-  camCarNumber: "---",
-  camDriverName: "None",
-  camPaused: false
+const INITIAL_INCIDENTS: Incident[] = [];
+const DEFAULT_CLOCK: ClockState = {
+  camCar: {
+    driverName: "unknown",
+    index: -1,
+    number: "---",
+  },
+  camSpeed: 0,
+  live: {
+    num: -1,
+    time: -1,
+  },
+  replay: {
+    num: -1,
+    time: -1,
+  }
 }
+const DEFAULT_TELEMETRY_JSON: any = {};
 
 function formatTime(seconds: number) {
   seconds = Math.round(seconds);
@@ -51,35 +63,21 @@ export function App() {
   // any child components with changed props also re-render
   const [incidents, setIncidents] = useState(INITIAL_INCIDENTS);
   const [clock, setClock] = useState(DEFAULT_CLOCK);
+  const [telemetryJson, setTelemetryJson] = useState(DEFAULT_TELEMETRY_JSON);
 
   function listen() {
-    sdk.receive('incident-created', (message: BackendIncident) => {
-      console.log('incident', message);
-      
-      setIncidents((prev) => {
-        if(prev.find(({id}) => id === message.id))
-          return prev;
-
-        return [...prev, message].filter(inc => inc.resolution !== "Deleted");
-      });
+    sdk.receive('incident-data', (message: IncidentData) => {
+      const maxId = Math.max(...(incidents.map(inc=> inc.id)));
+      let newIncidents: Incident[] = [...incidents, {
+        data: message,
+        id: maxId + 1,
+        resolution: 'Unresolved',
+      }];
+      setIncidents(newIncidents);
     });
 
-    sdk.receive('incident-resolved', (message: BackendIncident) => {
-      console.log("got incident resolved: " + message.id);
-
-      setIncidents((prev) => {
-        return prev.map((inc) => {
-          if (inc.id == message.id) {
-            return message;
-          } else {
-            return inc;
-          }
-        }).filter((inc) => inc.resolution !== "Deleted");
-      });
-    });
-
-    sdk.receive('clock-update', (message: ReplayTime) => setClock(message));
-    sdk.connect();
+    sdk.receive('clock-update', (message: ClockState) => setClock(message));
+    sdk.receive('telemetry-json', (message: any) => setTelemetryJson(message));
   }
 
   // clear all incidents, triggering a re-render
@@ -112,6 +110,14 @@ export function App() {
     // sdk.camLive();
   }
 
+  const [selectedTab, setSelectedTab] = useState(0);
+  const handleTabSwitch = (ev: React.SyntheticEvent, newTab: number) => {
+    setSelectedTab(newTab);
+  }
+
+
+
+
   return <Stack spacing={4}>
     <Header time={clock} />
     <Grid container spacing={2}>
@@ -126,30 +132,34 @@ export function App() {
             </IconButton>
           </Stack>
           {
-            unresolvedIncidents.map((incident) => <Incident
+            unresolvedIncidents.map((incident) => <IncidentView
               key={incident.id}
               incident={incident} />
             )
           }
         </Stack>
       </Grid>
-      <Grid item xs={6} sx={{ minWidth: 400 }}>
-        <Stack spacing={2}>
-          <Typography variant="h4">Drivers</Typography>
+      <Grid item xs={8} sx={{ minWidth: 400 }}>
+        <Tabs value={selectedTab} onChange={handleTabSwitch}>
+          <Tab label="Drivers" />
+          <Tab label="Pacing" />
+          <Tab label="Telemetry" />
+        </Tabs>
+        <div hidden={selectedTab !== 0}> {/* Drivers */}
           {
             Object.keys(acknowledgedIncidentsByCarNumber).map(num => <CarIncidents
               key={num}
               incidents={acknowledgedIncidentsByCarNumber[num]} />
             )
           }
-        </Stack>
+        </div>
+        <div hidden={selectedTab !== 1}> {/* Pacing */}
+          <Pacing />
+        </div>
+        <div hidden={selectedTab !== 2}> {/* Telemetry */}
+          <TelemetryViewer sourceJson={telemetryJson} />
+        </div>
       </Grid>
-      {/* <Grid item xs={2}>
-        <Stack>
-          <Typography variant="h4">Pacing Order</Typography>
-          <Typography variant="h6">(coming soon)</Typography>
-        </Stack>
-      </Grid> */}
     </Grid>
   </Stack>
 }

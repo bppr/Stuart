@@ -1,16 +1,11 @@
 import { join } from 'path'
 import fs from 'fs';
 
-import { BrowserWindow } from 'electron'
+import { BrowserWindow, ipcMain } from 'electron'
 import iracing from 'node-irsdk-2021';
-
-import Watcher, { Outbox } from './state';
-import { NotifyOfSessionChanged } from "./watchers/NotifyOfSessionChanged";
-import { IRacingIncidentCount } from "./watchers/NotifyOfIncident";
-import { OffTrackTimer } from './watchers/offtrack';
-import { MajorIncidentWatcher } from './watchers/fcy';
-import { Clock } from "./watchers/clock";
-import Application from './application';
+import {IRSDKObserver} from './state/streams';
+import incidentCount from './state/watchers/incident-count'
+import clock from './state/views/clock';
 
 import './ipc-inbox';
 
@@ -43,36 +38,19 @@ export function start() {
 
 function startSDK(win: BrowserWindow) {
   const sdk = iracing.init({
-    sessionInfoUpdateInterval: 100 /* ms */,
-    telemetryUpdateInterval: 50
+    sessionInfoUpdateInterval: 2000 /* ms */,
+    telemetryUpdateInterval: 2000
   });
-
-
-  let consoleOutbox: Outbox = {
-    send: (channel, data) => {
-      if(channel === 'clock-update') return;
-      console.log('O (' + channel + '): ' + JSON.stringify(data));
-    }
-  }
-
-  Application.getInstance().addOutbox(consoleOutbox);
-
-  const incidentDb = Application.getInstance().incidents;
-  const outbox = Application.getInstance().getOutbox();
 
   sdk.on('Connected', () => console.log('connected to iRacing!'));
 
-  const config = {
-    observers: [
-      new IRacingIncidentCount(incidentDb),
-      new NotifyOfSessionChanged(outbox),
-      new MajorIncidentWatcher(outbox, incidentDb),
-      new Clock(outbox)
-    ]
-  }
+  const observer = new IRSDKObserver(sdk);
 
-  const watcher = new Watcher(config);
-
-  sdk.on('Telemetry', watcher.onTelemetryUpdate.bind(watcher));
-  sdk.on('SessionInfo', watcher.onSessionUpdate.bind(watcher));
+  let incidents = observer.createEventFeed([
+    incidentCount
+  ]);
+  incidents.subscribe(incData => {
+    win.webContents.send('incident-data', incData);
+  });
+  observer.getViewFeed(clock).subscribe(clockState => win.webContents.send('clock-update', clockState));
 }

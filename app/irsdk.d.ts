@@ -1,5 +1,5 @@
 declare module 'node-irsdk-2021' {
-  interface TelemetryData {
+  export interface TelemetryData {
     timestamp: Date
     values: {
       SessionNum: number
@@ -11,11 +11,14 @@ declare module 'node-irsdk-2021' {
       CarIdxLap: number[]
       CarIdxLapDistPct: number[]
       CarIdxOnPitRoad: boolean[]
+      CarIdxPaceLine: number[]
+      CarIdxPaceRow: number[]
+      PaceMode: number
       CarIdxTrackSurface: string
     }
   }
 
-  interface SessionDriver {
+  export interface SessionDriver {
     CarIdx: number
     TeamName: string
     UserName: string
@@ -26,7 +29,7 @@ declare module 'node-irsdk-2021' {
     UserID: number
   }
 
-  interface SessionData {
+  export interface SessionData {
     SessionType: string
     ResultsFastestLap: {
       CarIdx: number
@@ -35,7 +38,7 @@ declare module 'node-irsdk-2021' {
     }[]
   }
 
-  interface SessionData {
+  export interface SessionData {
     timestamp: Date
     data: {
       DriverInfo: {

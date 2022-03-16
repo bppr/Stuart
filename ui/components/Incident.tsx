@@ -1,7 +1,7 @@
 import React from 'react';
 
 import * as sdk from '../sdk';
-import { Incident as BackendIncident, IncidentClass } from '../../common/incident';
+import { Incident as BackendIncident } from '../../common/incident';
 
 import { Card, CardHeader, ButtonGroup, Avatar, IconButton } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
