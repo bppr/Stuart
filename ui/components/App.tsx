@@ -67,13 +67,16 @@ export function App() {
 
   function listen() {
     sdk.receive('incident-data', (message: IncidentData) => {
-      const maxId = Math.max(...(incidents.map(inc=> inc.id)));
-      let newIncidents: Incident[] = [...incidents, {
-        data: message,
-        id: maxId + 1,
-        resolution: 'Unresolved',
-      }];
-      setIncidents(newIncidents);
+
+      setIncidents((prevIncidents) => {
+        const maxId = Math.max(...(prevIncidents.map(inc=> inc.id)));
+
+        return [...prevIncidents, {
+          data: message,
+          id: maxId + 1,
+          resolution: 'Unresolved',
+        }]
+      });
     });
 
     sdk.receive('clock-update', (message: ClockState) => setClock(message));
@@ -92,31 +95,14 @@ export function App() {
   let acknowledgedIncidents = _.filter(incidents, i => i.resolution == "Acknowledged" || i.resolution == "Penalized")
   let acknowledgedIncidentsByCarNumber = _.groupBy(acknowledgedIncidents, i => i.data.car.number);
 
-  let resolvedIncidents = incidents.filter((inc) => {
-    return inc.resolution != "Unresolved" && inc.resolution != "Deleted";
-  });
-
   let unresolvedIncidents = incidents.filter((inc) => {
     return inc.resolution == "Unresolved";
   });
-
-  const playPause = (ev: React.MouseEvent) => {
-    ev.preventDefault();
-    // sdk.camPlayToggle();
-  }
-
-  const liveReplay = (ev: React.MouseEvent) => {
-    ev.preventDefault();
-    // sdk.camLive();
-  }
 
   const [selectedTab, setSelectedTab] = useState(0);
   const handleTabSwitch = (ev: React.SyntheticEvent, newTab: number) => {
     setSelectedTab(newTab);
   }
-
-
-
 
   return <Stack spacing={4}>
     <Header time={clock} />

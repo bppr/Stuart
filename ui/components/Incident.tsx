@@ -13,7 +13,7 @@ import { formatTime } from '../clock';
 // allows tally/dismiss/resolve via props.onTally, props.onDismiss, props.onResolve
 // prop: incident, a record for an incident including its resolution state
 export default function Incident(props: {
-  incident: BackendIncident
+  incident: BackendIncident,
 }) {
   const car = props.incident.data.car;
 

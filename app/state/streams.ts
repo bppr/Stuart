@@ -113,7 +113,8 @@ export class IRSDKObserver {
         let combinedSource = combineLatest([telemetrySource, sessionSource]);
         let appStateSource = combinedSource.pipe(map(([telem, sesh]) => toAppState(sesh, telem)));
 
-        // Depending on how we want to handle page refreshes, this could be logged as a ReplaySubject with no limit. But for now, we're just going to keep the previous state so that views can always get an updated version of the state, and event streams will only pick up new events.        
+        // TODO: The state views should use a subject that only keeps track of the last appstate. That way, any additional connections will only get the latest update event
+        // But the incident feed should probably be saved entirely and replayed with all the detectors when a new window is opened.
         this.appState = new ReplaySubject(1);
         appStateSource.subscribe(this.appState);
     }

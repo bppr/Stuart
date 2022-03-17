@@ -5,6 +5,7 @@ import { BrowserWindow, ipcMain } from 'electron'
 import iracing from 'node-irsdk-2021';
 import { IRSDKObserver } from './state/streams';
 import incidentCount from './state/watchers/incident-count'
+import lapCount from './state/watchers/lap-count'
 import clock from './state/views/clock';
 
 import './ipc-inbox';
@@ -47,9 +48,15 @@ function startSDK(win: BrowserWindow) {
 
   const observer = new IRSDKObserver(sdk);
 
-  let incSub = observer.createEventFeed([incidentCount]).subscribe(incData =>
+  // create and publish the incident feed
+  let incSub = observer.createEventFeed([
+    incidentCount,
+    // lapCount, // for testing
+  ]).subscribe(incData =>
     win.webContents.send('incident-data', incData)
   );
+
+  // create and publish the various state observer feeds
   let clockSub = observer.createViewFeed(clock).subscribe(clockState => 
     win.webContents.send('clock-update', clockState)
   );
@@ -62,10 +69,12 @@ function startSDK(win: BrowserWindow) {
   let telemSub = combinedSource.pipe(throttleTime(1000))
     .subscribe(data => win.webContents.send("telemetry-json", data));
     
+  /* maybe not necessary?
   win.on("close", (_) => {
     incSub.unsubscribe();
     clockSub.unsubscribe();
     telemSub.unsubscribe();
   })
+  */
   
 }
