@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 
 import * as sdk from '../sdk';
-import { Incident, IncidentCar as Car } from '../../common/incident';
+import { IncidentCar as Car } from '../../common/incident';
 import { getIncidentIcon } from './Incident';
 import { Accordion, AccordionDetails, AccordionSummary, Avatar, Badge, Typography, List, IconButton, ListItem, ListItemIcon, ListItemText, ButtonGroup, Stack } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import UndoIcon from '@mui/icons-material/Undo';
 import SearchIcon from '@mui/icons-material/Search';
+import { Incident } from './App';
 
 // Displays a list of incidents for a specific driver
 
@@ -49,7 +50,6 @@ export default function CarIncidents(props: { incidents: Incident[]}) {
   </Accordion>
 }
 
-
 function formatPct(lapPct: number, decimals: number = 2) {
   const rounded = (lapPct * 100).toLocaleString('en-US', {
     maximumSignificantDigits: 2 + decimals
@@ -67,7 +67,7 @@ function CarIncident(props: { incident: Incident}) {
 
     const unresolveIncident = (ev: React.MouseEvent) => {
       ev.preventDefault()
-      sdk.unresolveIncident(props.incident.id);
+      props.incident.resolve("Unresolved");
     }
 
     const inc = props.incident;

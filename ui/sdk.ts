@@ -15,22 +15,6 @@ export function replay({ car, sessionNum, sessionTime }: IncidentData) {
   window.api.replay(car.number, sessionNum, ms);
 }
 
-export function acknowledgeIncident(id: number) {
-  window.api.acknowledgeIncident(id);
-}
-
-export function dismissIncident(id: number) {
-  window.api.dismissIncident(id);
-}
-
-export function unresolveIncident(id: number) {
-  window.api.unresolveIncident(id);
-}
-
-export function clearIncidents() {
-  window.api.clearIncidents();
-}
-
 export function pauseReplay() {
   window.api.pauseReplay();
 }

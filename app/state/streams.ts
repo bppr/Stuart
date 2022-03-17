@@ -68,7 +68,7 @@ function toAppState(session: iracing.SessionData, telemetry: iracing.TelemetryDa
             onPitRoad: false, // TODO
             paceLine: telemetry.values.CarIdxPaceLine[index],
             paceRow: telemetry.values.CarIdxPaceRow[index],
-            trackSurface: telemetry.values.CarIdxTrackSurface,
+            trackSurface: telemetry.values.CarIdxTrackSurface[index],
             teamName: driver.TeamName
         };
         return car;
@@ -123,6 +123,8 @@ export class IRSDKObserver {
      * Creates a new event feed pipeline using the given watchers.
      * 
      * Changes to the app state will be published to each watcher, and any events produced will be observed from the returned Observable.
+     * 
+     * TODO: there's probably a better way to combine "watchers" and "stateful watchers" into a single parameter.
      * @param watchers 
      * @param statefulWatchers 
      */

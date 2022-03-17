@@ -1,7 +1,8 @@
 import React from 'react';
 
 import * as sdk from '../sdk';
-import { Incident as BackendIncident } from '../../common/incident';
+import { Resolution } from '../../common/incident';
+import { Incident } from "./App"
 
 import { Card, CardHeader, ButtonGroup, Avatar, IconButton } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
@@ -12,8 +13,8 @@ import { formatTime } from '../clock';
 // a component for displaying an incident
 // allows tally/dismiss/resolve via props.onTally, props.onDismiss, props.onResolve
 // prop: incident, a record for an incident including its resolution state
-export default function Incident(props: {
-  incident: BackendIncident,
+function Incident(props: {
+  incident: Incident,
 }) {
   const car = props.incident.data.car;
 
@@ -25,17 +26,17 @@ export default function Incident(props: {
 
   const acknowledgeIncident = (ev: React.MouseEvent) => {
     ev.preventDefault()
-    sdk.acknowledgeIncident(props.incident.id);
+    props.incident.resolve("Acknowledged");
   }
 
   const dismissIncident = (ev: React.MouseEvent) => {
     ev.preventDefault()
-    sdk.dismissIncident(props.incident.id);
+    props.incident.resolve("Dismissed");
   }
 
   const unresolveIncident = (ev: React.MouseEvent) => {
     ev.preventDefault()
-    sdk.unresolveIncident(props.incident.id);
+    props.incident.resolve("Unresolved");
   }
 
   return <Card>
@@ -43,7 +44,7 @@ export default function Incident(props: {
       avatar={
         <Avatar sx={{ color: "black" }} alt={props.incident.data.type}>{ getIncidentIcon(props.incident) }</Avatar>
       }
-      title={`#${car.number} ${car.driverName}`}
+      title={`(${props.incident.id} #${car.number} ${car.driverName}`}
       subheader={[props.incident.data.type, '/', formatTime(props.incident.data.sessionTime)].join(' ')}
       action={
         <ButtonGroup size="large">
@@ -63,7 +64,7 @@ export default function Incident(props: {
 
 }
 
-export function getIncidentIcon(incident: BackendIncident) {
+export function getIncidentIcon(incident: Incident) {
   let icon = "🚨";
   switch (incident.data.type) {
     case "Track Limits":
@@ -84,3 +85,5 @@ export function getIncidentIcon(incident: BackendIncident) {
   }
   return icon;
 }
+
+export default React.memo(Incident);

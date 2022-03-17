@@ -7,6 +7,7 @@ import { IRSDKObserver } from './state/streams';
 import incidentCount from './state/watchers/incident-count'
 import lapCount from './state/watchers/lap-count'
 import clock from './state/views/clock';
+import offTrack from './state/watchers/offtrack';
 
 import './ipc-inbox';
 import { combineLatest, map, Observable, throttleTime } from 'rxjs';
@@ -51,13 +52,15 @@ function startSDK(win: BrowserWindow) {
   // create and publish the incident feed
   let incSub = observer.createEventFeed([
     incidentCount,
-    // lapCount, // for testing
+   // lapCount, // for testing
+  ], [
+    offTrack
   ]).subscribe(incData =>
     win.webContents.send('incident-data', incData)
   );
 
   // create and publish the various state observer feeds
-  let clockSub = observer.createViewFeed(clock).subscribe(clockState => 
+  let clockSub = observer.createViewFeed(clock).subscribe(clockState =>
     win.webContents.send('clock-update', clockState)
   );
 
@@ -68,7 +71,10 @@ function startSDK(win: BrowserWindow) {
   let combinedSource = combineLatest([telemetrySource, sessionSource]);
   let telemSub = combinedSource.pipe(throttleTime(1000))
     .subscribe(data => win.webContents.send("telemetry-json", data));
-    
+
+  // telemetry feed of AppState
+  //observer.createViewFeed((_) => _).pipe(throttleTime(1000)).subscribe(appState => win.webContents.send("telemetry-json", JSON.parse(JSON.stringify(appState))));
+
   /* maybe not necessary?
   win.on("close", (_) => {
     incSub.unsubscribe();
@@ -76,5 +82,5 @@ function startSDK(win: BrowserWindow) {
     telemSub.unsubscribe();
   })
   */
-  
+
 }

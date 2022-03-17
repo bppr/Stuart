@@ -8,12 +8,18 @@ import Header from './Header';
 import Pacing from './Pacing';
 import TelemetryViewer from './TelemetryViewer';
 
-import { IncidentData, Incident } from '../../common/incident';
+import { IncidentData, Resolution } from '../../common/incident';
 import { ClockState } from '../../common/ClockState';
 
 import { Grid, Stack, Typography, IconButton, Tabs, Tab } from "@mui/material";
 import CloseIcon from '@mui/icons-material/CancelOutlined';
 
+export type Incident = {
+  id: number,
+  resolution: Resolution,
+  data: IncidentData,
+  resolve: (_:Resolution) => void,
+}
 
 // return a copy of array with element at index replaced by supplied element
 function replace<T>(array: T[], index: number, element: T): T[] {
@@ -69,12 +75,25 @@ export function App() {
     sdk.receive('incident-data', (message: IncidentData) => {
 
       setIncidents((prevIncidents) => {
-        const maxId = Math.max(...(prevIncidents.map(inc=> inc.id)));
+        const id = Math.max(0, ...(prevIncidents.map(inc => inc.id))) + 1;
+
+        let resolveIncident = (res: Resolution) => {
+          setIncidents((incs) => {
+            return incs.map((inc) => {
+              if (inc.id === id) {
+                return { ...inc, resolution: res }
+              } else {
+                return inc;
+              }
+            })
+          })
+        }
 
         return [...prevIncidents, {
           data: message,
-          id: maxId + 1,
+          id: id,
           resolution: 'Unresolved',
+          resolve: resolveIncident,
         }]
       });
     });
@@ -86,7 +105,7 @@ export function App() {
   // clear all incidents, triggering a re-render
   function clearIncidents() {
     if (window.confirm("Are you sure? You should only do this when a session changes."))
-      sdk.clearIncidents();
+      setIncidents([]);
   }
 
   // only listen on the first render
@@ -118,9 +137,11 @@ export function App() {
             </IconButton>
           </Stack>
           {
-            unresolvedIncidents.map((incident) => <IncidentView
-              key={incident.id}
-              incident={incident} />
+            unresolvedIncidents.map((incident) => {
+              return <IncidentView
+                key={incident.id}
+                incident={incident} />
+            }
             )
           }
         </Stack>
