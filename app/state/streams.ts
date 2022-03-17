@@ -7,7 +7,6 @@
 
 import iracing from 'node-irsdk-2021';
 import { combineLatest, distinctUntilChanged, merge, fromEvent, map, mergeMap, Observable, of, pairwise, pluck, ReplaySubject, scan, Subject } from 'rxjs';
-import sdk from '../../ui/sdk';
 import { AppState, CarState, Session, SessionType } from '../state';
 import equal from 'deep-equal';
 
@@ -108,8 +107,8 @@ export class IRSDKObserver {
     private appState: Subject<AppState>;
 
     constructor(irsdk: iracing.SDKInstance) {
-        let telemetrySource = new Observable<iracing.TelemetryData>(o => sdk.on("Telemetry", (data: iracing.TelemetryData) => o.next(data)));
-        let sessionSource = new Observable<iracing.SessionData>(o => sdk.on("SessionInfo", (data: iracing.SessionData) => o.next(data)));
+        let telemetrySource = new Observable<iracing.TelemetryData>(o => irsdk.on("Telemetry", (data: iracing.TelemetryData) => o.next(data)));
+        let sessionSource = new Observable<iracing.SessionData>(o => irsdk.on("SessionInfo", (data: iracing.SessionData) => o.next(data)));
 
         let combinedSource = combineLatest([telemetrySource, sessionSource]);
         let appStateSource = combinedSource.pipe(map(([telem, sesh]) => toAppState(sesh, telem)));
@@ -174,7 +173,7 @@ export class IRSDKObserver {
      * Creates an Observable that publishes an updated view of the state if the returned view ever changes.
      * @param view 
      */
-    public getViewFeed<V>(view: View<AppState, V>): Observable<V> {
+    public createViewFeed<V>(view: View<AppState, V>): Observable<V> {
         return this.appState.pipe(
             map((v,i)=> view(v)),
             distinctUntilChanged((v1, v2) => equal(v1, v2))
