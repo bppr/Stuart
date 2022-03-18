@@ -1,4 +1,52 @@
-const TEST_INCIDENTS = [
+
+import { ClockState } from "../common/ClockState"
+import { IncidentData } from "../common/incident"
+
+const TEST_INCIDENTS: IncidentData[] = [
+  {
+    sessionNum: 1,
+    sessionTime: 10.0,
+    car: {
+      currentLap: 3,
+      currentLapPct: 0.5,
+      driverName: "Zach C Miller",
+      incidentCount: 1,
+      index: 1,
+      number: "49",
+      teamName: "Zach C Miller",
+    },
+    type: "Incident Count",
+  },{
+    sessionNum: 1,
+    sessionTime: 15.0,
+    car: {
+      currentLap: 4,
+      currentLapPct: 0.53,
+      driverName: "Zach C Miller",
+      incidentCount: 2,
+      index: 1,
+      number: "49",
+      teamName: "Zach C Miller",
+    },
+    type: "Incident Count",
+  },{
+    sessionNum: 1,
+    sessionTime: 20.0,
+    car: {
+      currentLap: 4,
+      currentLapPct: 0.12,
+      driverName: "Brian Pratt2",
+      incidentCount: 2,
+      index: 2,
+      number: "21",
+      teamName: "Brian Pratt2",
+    },
+    type: "Incident Count"
+  }
+]
+
+
+const TEST_INCIDENTS2  = [
   {
     sessionNum: 0,
     sessionTime: 45.5016098234,
@@ -49,6 +97,25 @@ const TEST_INCIDENTS = [
   }
 ]
 
+const TEST_CLOCK_STATE: ClockState = {
+  camCar: {
+    driverName: "Zach C Miller",
+    index: 1,
+    number: "49",
+  },
+  camSpeed: 1,
+  live: {
+    num: 1,
+    time: 60,
+  },
+  replay: {
+    num: 1,
+    time: 40
+  }
+}
+
 export {
-  TEST_INCIDENTS
+  TEST_INCIDENTS,
+  TEST_INCIDENTS2,
+  TEST_CLOCK_STATE,
 }

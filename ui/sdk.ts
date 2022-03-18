@@ -26,3 +26,7 @@ export function playReplay() {
 export function liveReplay() {
   window.api.liveReplay();
 }
+
+export function sendChatMessage(msg: string) {
+  window.api.sendChatMessage(msg);
+}

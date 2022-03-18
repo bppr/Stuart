@@ -5,7 +5,9 @@ import { IconButton, Stack, TextField } from '@mui/material';
 import PlayArrow from '@mui/icons-material/PlayArrow';
 import Pause from '@mui/icons-material/Pause';
 
-
+/**
+ * Renders an object as json in a browseable form, with json path support
+ */
 export default function JSONViewer(props: {
     sourceJson: any
 }) {

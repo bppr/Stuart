@@ -11,6 +11,7 @@ interface APIBridge {
   pauseReplay();
   playReplay();
   liveReplay();
+  sendChatMessage(msg: string);
 }
 
 interface WindowWithSDK extends Window {

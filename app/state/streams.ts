@@ -69,7 +69,10 @@ function toAppState(session: iracing.SessionData, telemetry: iracing.TelemetryDa
             paceLine: telemetry.values.CarIdxPaceLine[index],
             paceRow: telemetry.values.CarIdxPaceRow[index],
             trackSurface: telemetry.values.CarIdxTrackSurface[index],
-            teamName: driver.TeamName
+            teamName: driver.TeamName,
+            position: telemetry.values.CarIdxPosition[index],
+            classPosition: telemetry.values.CarIdxClassPosition[index],
+
         };
         return car;
     });
@@ -98,6 +101,7 @@ function toAppState(session: iracing.SessionData, telemetry: iracing.TelemetryDa
         sessions,
         trackLength: getTrackLength(session),
         trackLengthDisplay: session.data.WeekendInfo.TrackLength,
+        sessionFlags: [], // TODO
     };
 
     return appState;

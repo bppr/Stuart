@@ -13,6 +13,8 @@ declare module 'node-irsdk-2021' {
       CarIdxOnPitRoad: boolean[]
       CarIdxPaceLine: number[]
       CarIdxPaceRow: number[]
+      CarIdxPosition: number[]
+      CarIdxClassPosition: number[]
       PaceMode: number
       CarIdxTrackSurface: string
     }
@@ -59,7 +61,12 @@ declare module 'node-irsdk-2021' {
   }
 
   type RpySrchMode = "ToStart" | "ToEnd" | "PrevSession" | "NextSession" | "PrevLap" | "NextLap" | "PrevFrame" | "NextFrame" | "PrevIncident" | "NextIncident";
-
+  enum ChatCommand {
+    Macro = 0,
+    BeginChat = 1,
+    Reply = 2,
+    Cancel = 3,
+  }
   export class SDKInstance {
     on(event: string, handler: (data: any) => void)
 
@@ -74,6 +81,8 @@ declare module 'node-irsdk-2021' {
       play(): void
       pause(): void
     }
+
+    execChatCmd(command: number, arg?: number)
   }
 
   export function init({ sessionInfoUpdateInterval: number, telemetryUpdateInterval: number }): SDKInstance

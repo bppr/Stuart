@@ -65,8 +65,8 @@ function startSDK(win: BrowserWindow) {
   );
 
   // create a telemetry feed for just the data
-  let telemetrySource = new Observable<iracing.TelemetryData>(o => sdk.on("Telemetry", (data: iracing.TelemetryData) => o.next(data)));
-  let sessionSource = new Observable<iracing.SessionData>(o => sdk.on("SessionInfo", (data: iracing.SessionData) => o.next(data)));
+  let telemetrySource: Observable<iracing.TelemetryData> = new Observable<iracing.TelemetryData>(o => sdk.on("Telemetry", (data: iracing.TelemetryData) => o.next(data)));
+  let sessionSource: Observable<iracing.SessionData> = new Observable<iracing.SessionData>(o => sdk.on("SessionInfo", (data: iracing.SessionData) => o.next(data)));
 
   let combinedSource = combineLatest([telemetrySource, sessionSource]);
   let telemSub = combinedSource.pipe(throttleTime(1000))
@@ -82,5 +82,6 @@ function startSDK(win: BrowserWindow) {
     telemSub.unsubscribe();
   })
   */
+
 
 }

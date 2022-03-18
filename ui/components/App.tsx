@@ -3,30 +3,22 @@ import _ from 'lodash';
 
 import sdk from '../sdk';
 import IncidentView from './Incident';
-import CarIncidents from './Car';
+import CarIncidents from './CarIncidents';
 import Header from './Header';
 import Pacing from './Pacing';
-import TelemetryViewer from './TelemetryViewer';
+import TelemetryViewer from './JSONViewer';
 
 import { IncidentData, Resolution } from '../../common/incident';
 import { ClockState } from '../../common/ClockState';
 
+import { Incident } from '../types/Incident';
+
 import { Grid, Stack, Typography, IconButton, Tabs, Tab } from "@mui/material";
 import CloseIcon from '@mui/icons-material/CancelOutlined';
 
-export type Incident = {
-  id: number,
-  resolution: Resolution,
-  data: IncidentData,
-  resolve: (_:Resolution) => void,
-}
+import { TEST_CLOCK_STATE, TEST_INCIDENTS } from '../test-utils';
 
-// return a copy of array with element at index replaced by supplied element
-function replace<T>(array: T[], index: number, element: T): T[] {
-  return _.tap([...array], arr => arr.splice(index, 1, element));
-}
 
-// use ./test-utils/TEST_INCIDENT for ui work
 const INITIAL_INCIDENTS: Incident[] = [];
 const DEFAULT_CLOCK: ClockState = {
   camCar: {
@@ -58,12 +50,13 @@ function formatTime(seconds: number) {
     (seconds.toString().padStart(2, "0"));
 }
 
-// App - the main UI component - takes no props
-// has state for incidents and selected car - re-renders on state changes
-// listens for new incidents (listener bound on first render) - changes incident state
-// listens for click events to select car - changes selected car state
-// renders many Incidents
-// renders many IncidentCounts
+/**
+ * App is the main UI component. In addition to organizing the layout and other sub components, 
+ * it is also responsible for:
+ * - Maintaining a "database" of incidents and allowing for their resolution (see "addIncident")
+ * - setting up listeners for new incident events and state changes from the backend (see "listen")
+ * 
+ */
 export function App() {
   // any time we call a setter here, getter is updated and App re-renders 
   // any child components with changed props also re-render
@@ -71,33 +64,33 @@ export function App() {
   const [clock, setClock] = useState(DEFAULT_CLOCK);
   const [telemetryJson, setTelemetryJson] = useState(DEFAULT_TELEMETRY_JSON);
 
-  function listen() {
-    sdk.receive('incident-data', (message: IncidentData) => {
+  function addIncident(incident: IncidentData) {
+    setIncidents((prevIncidents) => {
+      const id = Math.max(0, ...(prevIncidents.map(inc => inc.id))) + 1;
 
-      setIncidents((prevIncidents) => {
-        const id = Math.max(0, ...(prevIncidents.map(inc => inc.id))) + 1;
-
-        let resolveIncident = (res: Resolution) => {
-          setIncidents((incs) => {
-            return incs.map((inc) => {
-              if (inc.id === id) {
-                return { ...inc, resolution: res }
-              } else {
-                return inc;
-              }
-            })
+      let resolveIncident = (res: Resolution) => {
+        setIncidents((incs) => {
+          return incs.map((inc) => {
+            if (inc.id === id) {
+              return { ...inc, resolution: res }
+            } else {
+              return inc;
+            }
           })
-        }
+        })
+      }
 
-        return [...prevIncidents, {
-          data: message,
-          id: id,
-          resolution: 'Unresolved',
-          resolve: resolveIncident,
-        }]
-      });
+      return [...prevIncidents, {
+        data: incident,
+        id: id,
+        resolution: 'Unresolved',
+        resolve: resolveIncident,
+      }]
     });
+  }
 
+  function listen() {
+    sdk.receive('incident-data', addIncident);
     sdk.receive('clock-update', (message: ClockState) => setClock(message));
     sdk.receive('telemetry-json', (message: any) => setTelemetryJson(message));
   }
@@ -110,6 +103,14 @@ export function App() {
 
   // only listen on the first render
   useEffect(listen, []);
+
+  // FOR TESTING!
+  useEffect(() => {
+    for(let incident of TEST_INCIDENTS) {
+      addIncident(incident);
+    }
+    setClock(TEST_CLOCK_STATE);
+  }, []);
 
   let acknowledgedIncidents = _.filter(incidents, i => i.resolution == "Acknowledged" || i.resolution == "Penalized")
   let acknowledgedIncidentsByCarNumber = _.groupBy(acknowledgedIncidents, i => i.data.car.number);

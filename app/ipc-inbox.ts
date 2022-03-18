@@ -39,3 +39,10 @@ ipcMain.on('replay-live', (ev, data: any) => {
   const sdk = iracing.getInstance();
   sdk.playbackControls.search("ToEnd");
 });
+
+ipcMain.on('send-chat-message', (ev, data: string) => {
+  console.log("CHAT:" + data);
+  const sdk = iracing.getInstance();
+  sdk.execChatCmd(1);
+  // TODO type message here?
+})

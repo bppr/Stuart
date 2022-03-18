@@ -1,8 +1,7 @@
 import React from 'react';
 
 import * as sdk from '../sdk';
-import { Resolution } from '../../common/incident';
-import { Incident } from "./App"
+import { Incident } from "../types/Incident";
 
 import { Card, CardHeader, ButtonGroup, Avatar, IconButton } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
@@ -10,8 +9,7 @@ import ClearIcon from '@mui/icons-material/Clear';
 import CheckIcon from '@mui/icons-material/Check'
 import { formatTime } from '../clock';
 
-// a component for displaying an incident
-// allows tally/dismiss/resolve via props.onTally, props.onDismiss, props.onResolve
+// a component for displaying an incident in the incident feed
 // prop: incident, a record for an incident including its resolution state
 function Incident(props: {
   incident: Incident,
@@ -34,17 +32,12 @@ function Incident(props: {
     props.incident.resolve("Dismissed");
   }
 
-  const unresolveIncident = (ev: React.MouseEvent) => {
-    ev.preventDefault()
-    props.incident.resolve("Unresolved");
-  }
-
   return <Card>
     <CardHeader
       avatar={
         <Avatar sx={{ color: "black" }} alt={props.incident.data.type}>{ getIncidentIcon(props.incident) }</Avatar>
       }
-      title={`(${props.incident.id} #${car.number} ${car.driverName}`}
+      title={`#${car.number} ${car.driverName}`}
       subheader={[props.incident.data.type, '/', formatTime(props.incident.data.sessionTime)].join(' ')}
       action={
         <ButtonGroup size="large">

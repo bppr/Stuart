@@ -7,10 +7,12 @@ import { Accordion, AccordionDetails, AccordionSummary, Avatar, Badge, Typograph
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import UndoIcon from '@mui/icons-material/Undo';
 import SearchIcon from '@mui/icons-material/Search';
-import { Incident } from './App';
+import { Incident } from "../types/Incident";
 
-// Displays a list of incidents for a specific driver
 
+/**
+ * Displays a list of incidents for a specific car (driver?)
+ */
 export default function CarIncidents(props: { incidents: Incident[]}) {
   const [expanded, setExpanded] = useState(false);
 
