@@ -9,6 +9,8 @@ import iracing from 'node-irsdk-2021';
 import { combineLatest, distinctUntilChanged, merge, fromEvent, map, mergeMap, Observable, of, pairwise, pluck, ReplaySubject, scan, Subject } from 'rxjs';
 import { AppState, CarState, Session, SessionType } from '../state';
 import equal from 'deep-equal';
+import fs from 'fs';
+import readline from 'readline';
 
 /**
  * A Watcher is a function that compares two versions of the input state (before and after) and returns a 
@@ -107,20 +109,77 @@ function toAppState(session: iracing.SessionData, telemetry: iracing.TelemetryDa
     return appState;
 }
 
-export class IRSDKObserver {
-    private appState: Subject<AppState>;
+type IRState = [iracing.TelemetryData, iracing.SessionData];
 
-    constructor(irsdk: iracing.SDKInstance) {
+export class IRSDKObserver {
+    public static fromIRSDK(irsdk: iracing.SDKInstance) : IRSDKObserver {
         let telemetrySource = new Observable<iracing.TelemetryData>(o => irsdk.on("Telemetry", (data: iracing.TelemetryData) => o.next(data)));
         let sessionSource = new Observable<iracing.SessionData>(o => irsdk.on("SessionInfo", (data: iracing.SessionData) => o.next(data)));
 
-        let combinedSource = combineLatest([telemetrySource, sessionSource]);
-        let appStateSource = combinedSource.pipe(map(([telem, sesh]) => toAppState(sesh, telem)));
+        let combinedSource: Observable<IRState> = combineLatest([telemetrySource, sessionSource]);
 
-        // TODO: The state views should use a subject that only keeps track of the last appstate. That way, any additional connections will only get the latest update event
-        // But the incident feed should probably be saved entirely and replayed with all the detectors when a new window is opened.
-        this.appState = new ReplaySubject(1);
-        appStateSource.subscribe(this.appState);
+        return new IRSDKObserver(combinedSource);
+    }
+
+    public static fromFile(filePath: string): IRSDKObserver {
+        console.log("Reading telemetry data from:", filePath);
+
+        const rl = readline.createInterface({
+            input: fs.createReadStream(filePath)
+        });
+
+        let lines = fromEvent(rl,"line").pipe(map(line => JSON.parse(line as string) as IRState));
+
+        rl.on("close", () => console.log("Done reading telemetry data."));
+
+        return new IRSDKObserver(lines, true);
+    }
+
+    /**
+     * Logs all telemetry and session data to the given path, so that it may be re-played for testing purposes
+     * @param filePath 
+     */
+    public toFile(filePath: string, append = false) {
+        if(!append) {
+            fs.writeFileSync(filePath, "");
+        }
+
+        // TODO unsubscribe?
+        return this.state.subscribe({
+            next: (irState) => {
+                fs.appendFileSync(filePath, JSON.stringify(irState) + "\r\n");
+            }
+        });
+    }
+
+    // A subject that replays at least the most recent state, possibly more
+    private state: Observable<IRState>;
+
+    private eventsAppState: Observable<AppState>;
+    // An observable (probably a subject) that reports only the most recent state
+    private viewsAppState: Observable<AppState>;
+
+    private constructor(private states: Observable<IRState>, replay = false) {
+        
+        // record the state of the app. If reading from a file, use a replay subject that records the state, because live events are not possible.
+        let irStateSubject: Subject<IRState>;
+        if(replay) {
+            // unlimited replay buffer, useful for file reads
+            irStateSubject = new ReplaySubject();
+        } else {
+            //
+            irStateSubject = new ReplaySubject(1);
+        }
+        states.subscribe(irStateSubject);
+        this.state = irStateSubject;
+        
+        // create a view of the overall states for event feeds
+        this.eventsAppState = this.state.pipe(map(([telem, sesh]) => toAppState(sesh, telem)));
+
+        // create a subject for views that only records the latest state
+        let viewSubject = new ReplaySubject<AppState>(1);
+        this.eventsAppState.subscribe(viewSubject);
+        this.viewsAppState = viewSubject;
     }
 
     /**
@@ -132,7 +191,7 @@ export class IRSDKObserver {
      * @param watchers 
      * @param statefulWatchers 
      */
-    public createEventFeed<E>(watchers: Watcher<AppState, E>[] = [], statefulWatchers: StatefulWatcher<AppState, any, E>[] = []): Observable<E> {
+    public getEventFeed<E>(watchers: Watcher<AppState, E>[] = [], statefulWatchers: StatefulWatcher<AppState, any, E>[] = []): Observable<E> {
         // 1) create a pairwise view of the appState
         
         // convert all watchers into stateful watchers (because it's easier)
@@ -140,7 +199,7 @@ export class IRSDKObserver {
         let allWatchers = [...asStatefulWatchers, ...statefulWatchers];
 
         // create a pairwise view of the state to have before/after
-        let pairs = this.appState.pipe(
+        let pairs = this.eventsAppState.pipe(
             pairwise()
         );
 
@@ -176,12 +235,16 @@ export class IRSDKObserver {
         return merge(...allWatchersAsObservables);
     }
 
+    public getRawTelemetryFeed() : Observable<IRState> {
+        return this.state;
+    }
+
     /**
      * Creates an Observable that publishes an updated view of the state if the returned view ever changes.
      * @param view 
      */
     public createViewFeed<V>(view: View<AppState, V>): Observable<V> {
-        return this.appState.pipe(
+        return this.viewsAppState.pipe(
             map((v,i)=> view(v)),
             distinctUntilChanged((v1, v2) => equal(v1, v2))
             );

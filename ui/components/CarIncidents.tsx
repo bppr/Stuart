@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 
 import * as sdk from '../sdk';
 import { IncidentCar as Car } from '../../common/incident';
-import { getIncidentIcon } from './Incident';
+import { getIncidentEmoji } from './Incident';
 import { Accordion, AccordionDetails, AccordionSummary, Avatar, Badge, Typography, List, IconButton, ListItem, ListItemIcon, ListItemText, ButtonGroup, Stack } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import UndoIcon from '@mui/icons-material/Undo';
@@ -87,7 +87,7 @@ function CarIncident(props: { incident: Incident}) {
         </ButtonGroup>}
       >
         <ListItemIcon>
-          <Avatar sx={{ color: "black", width: 32, height: 32 }}>{ getIncidentIcon(inc) }</Avatar>
+          <Avatar sx={{ color: "black", width: 32, height: 32 }}>{ getIncidentEmoji(inc) }</Avatar>
         </ListItemIcon>
         
         <ListItemText

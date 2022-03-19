@@ -40,9 +40,20 @@ ipcMain.on('replay-live', (ev, data: any) => {
   sdk.playbackControls.search("ToEnd");
 });
 
-ipcMain.on('send-chat-message', (ev, data: string) => {
-  console.log("CHAT:" + data);
-  const sdk = iracing.getInstance();
-  sdk.execChatCmd(1);
-  // TODO type message here?
-})
+function sleep(ms: number) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function sendMessages(messages: string[]) {
+  // simulate sending them for now
+  for(const msg of messages) {
+    console.log("CHAT:", msg);
+    await sleep(100);
+  }
+}
+
+ipcMain.handle('send-chat-message', async (ev, data: string[]) => {
+
+//  console.log(data);
+  await sendMessages(data);
+});

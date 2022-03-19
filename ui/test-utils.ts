@@ -42,6 +42,19 @@ const TEST_INCIDENTS: IncidentData[] = [
       teamName: "Brian Pratt2",
     },
     type: "Incident Count"
+  },{
+    sessionNum: 1,
+    sessionTime: 25.0,
+    car: {
+      currentLap: 4,
+      currentLapPct: 0.12,
+      driverName: "Joel del Maria del Sol Garbanzolo de el nombre largo",
+      incidentCount: 2,
+      index: 3,
+      number: "8",
+      teamName: "Team Longest Name Racing",
+    },
+    type: "Incident Count"
   }
 ]
 

@@ -5,6 +5,8 @@ import MoveUp from '@mui/icons-material/KeyboardArrowUp';
 import MoveDown from '@mui/icons-material/KeyboardArrowDown';
 import React, { useState } from 'react'
 import { PaceCarInfo, PaceState } from "../../common/PaceState";
+import sdk from "../sdk";
+import { stubString } from 'lodash';
 
 let TEST_PACE_ORDER: PaceState = {
     oneToGo: false,
@@ -427,17 +429,9 @@ function DesiredPaceOrderTable(props: {
     </TableContainer>
 }
 
-function sleep(ms: number) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-}
-
 async function sendIRCommands(commands: string[]): Promise<boolean> {
-    // simulate sending the commands for now
-    for (const c of commands) {
-        console.log("iR chat command: ", c);
-        await sleep(200);
-    }
-    return true
+    await sdk.sendChatMessages(commands);
+    return true;
 }
 
 /**

@@ -1,4 +1,8 @@
 declare module 'node-irsdk-2021' {
+  export type SessionFlag = "StartHidden" | string;
+  export type CarSessionFlag = "Servicible" | string;
+  export type SessionState = "Racing" | string;
+
   export interface TelemetryData {
     timestamp: Date
     values: {
@@ -15,6 +19,7 @@ declare module 'node-irsdk-2021' {
       CarIdxPaceRow: number[]
       CarIdxPosition: number[]
       CarIdxClassPosition: number[]
+      CarIdxSessionFlags: SessionFlag[][]
       PaceMode: number
       CarIdxTrackSurface: string
     }

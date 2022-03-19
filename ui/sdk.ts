@@ -27,6 +27,6 @@ export function liveReplay() {
   window.api.liveReplay();
 }
 
-export function sendChatMessage(msg: string) {
-  window.api.sendChatMessage(msg);
+export function sendChatMessages(messages: string[]) : Promise<void> {
+  return window.api.sendChatMessages(messages);
 }

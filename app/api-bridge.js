@@ -26,8 +26,8 @@ contextBridge.exposeInMainWorld(
     liveReplay: () => {
       ipcRenderer.send('replay-live', {});
     },
-    sendChatMessage: (msg) => {
-      ipcRenderer.send('send-chat-message', { msg });
+    sendChatMessages: (msgs) => {
+      return ipcRenderer.invoke('send-chat-message', msgs);
     }
   }
 );

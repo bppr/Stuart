@@ -7,6 +7,7 @@ import { Card, CardHeader, ButtonGroup, Avatar, IconButton } from '@mui/material
 import SearchIcon from '@mui/icons-material/Search';
 import ClearIcon from '@mui/icons-material/Clear';
 import CheckIcon from '@mui/icons-material/Check'
+
 import { formatTime } from '../clock';
 
 // a component for displaying an incident in the incident feed
@@ -32,15 +33,23 @@ function Incident(props: {
     props.incident.resolve("Dismissed");
   }
 
-  return <Card>
-    <CardHeader
+  return <Card sx={{
+    
+  }}>
+    <CardHeader sx={{
+      padding:"4px",
+      width:"352px",
+      height:"40px",
+    }}
       avatar={
-        <Avatar sx={{ color: "black" }} alt={props.incident.data.type}>{ getIncidentIcon(props.incident) }</Avatar>
+        <Avatar sx={{ color: "black" }} alt={props.incident.data.type}>{ getIncidentEmoji(props.incident) }</Avatar>
       }
       title={`#${car.number} ${car.driverName}`}
       subheader={[props.incident.data.type, '/', formatTime(props.incident.data.sessionTime)].join(' ')}
       action={
-        <ButtonGroup size="large">
+        <ButtonGroup size="large" sx={{
+          verticalAlign:"50%"
+        }}>
           <IconButton onClick={showReplay} title="Show in Replay">
             <SearchIcon />
           </IconButton>
@@ -57,7 +66,7 @@ function Incident(props: {
 
 }
 
-export function getIncidentIcon(incident: Incident) {
+export function getIncidentEmoji(incident: Incident) {
   let icon = "🚨";
   switch (incident.data.type) {
     case "Track Limits":
