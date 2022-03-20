@@ -74,7 +74,7 @@ function toAppState(session: iracing.SessionData, telemetry: iracing.TelemetryDa
             teamName: driver.TeamName,
             position: telemetry.values.CarIdxPosition[index],
             classPosition: telemetry.values.CarIdxClassPosition[index],
-
+            isPaceCar: driver.CarIsPaceCar != 0
         };
         return car;
     });

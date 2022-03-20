@@ -1,6 +1,8 @@
 import { ipcMain } from 'electron';
-import iracing from 'node-irsdk-2021';
-import { Resolution } from "../common/incident";
+import iracing, { SDKInstance } from 'node-irsdk-2021';
+import { focusIRacingWindow, typeMessage, sleep } from "./irobot";
+
+
 
 type CarNumberParam = { carNumber: string };
 type JumpToTimeParam = { sessionNum: number, sessionTime: number };
@@ -40,20 +42,21 @@ ipcMain.on('replay-live', (ev, data: any) => {
   sdk.playbackControls.search("ToEnd");
 });
 
-function sleep(ms: number) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-async function sendMessages(messages: string[]) {
-  // simulate sending them for now
-  for(const msg of messages) {
-    console.log("CHAT:", msg);
-    await sleep(100);
-  }
-}
-
 ipcMain.handle('send-chat-message', async (ev, data: string[]) => {
+  // focus iracing window
+  const sdk = iracing.getInstance();
 
-//  console.log(data);
-  await sendMessages(data);
+  await focusIRacingWindow();
+  await sleep(100);
+
+  // send messages one by one
+  for (const msg of data) {
+    sdk.execChatCmd(1);
+    await typeMessage(msg, true);
+    console.log("CHAT:", msg);
+    await sleep(33);
+  }
+  
+  // re-focus stuart
+  ev.sender.focus();
 });

@@ -16,6 +16,8 @@ const getPaceState: View<AppState, PaceState> = (state) => {
     const pits: PaceCarInfo[] = [];
 
     for(const car of state.cars) {
+        if(car.isPaceCar) { continue; }
+        
         const pCar: PaceCarInfo = {
             carNumber: car.number,
             driverName: car.driverName,
@@ -49,6 +51,8 @@ const getPaceState: View<AppState, PaceState> = (state) => {
     return {
         grid,
         pits,
-        oneToGo: state.sessionFlags.includes("OneLapToGreen")
+        oneToGo: state.sessionFlags.includes("OneLapToGreen"),
     }
 }
+
+export default getPaceState;

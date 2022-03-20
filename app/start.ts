@@ -8,6 +8,7 @@ import incidentCount from './state/watchers/incident-count'
 import lapCount from './state/watchers/lap-count'
 import clock from './state/views/clock';
 import offTrack from './state/watchers/offtrack';
+import pacing from './state/views/pacing';
 
 import './ipc-inbox';
 import { throttleTime } from 'rxjs';
@@ -77,6 +78,8 @@ function startSDK(win: BrowserWindow) {
     let clockSub = observer.createViewFeed(clock).subscribe(clockState =>
       win.webContents.send('clock-update', clockState)
     );
+
+    observer.createViewFeed(pacing).subscribe(paceState => win.webContents.send('pace-state', paceState));
   
     // create a telemetry feed for just the data
     let telemSub = observer.getRawTelemetryFeed().pipe(throttleTime(1000))

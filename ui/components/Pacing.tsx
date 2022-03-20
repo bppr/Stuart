@@ -452,8 +452,11 @@ async function sendIRCommands(commands: string[]): Promise<boolean> {
  * @param props 
  * @returns 
  */
-export default function Pacing(props: {}) {
-    let [paceOrder, setPaceOrder] = useState(TEST_PACE_ORDER);
+export default function Pacing(props: {
+    paceOrder: PaceState
+}) {
+//    let [paceOrder, setPaceOrder] = useState(TEST_PACE_ORDER);
+    let paceOrder = props.paceOrder;
 
     let [desiredPaceOrder, setDesiredPaceOrder] = useState(INITIAL_DESIRED_PACE_ORDER);
     let [executingCommands, setExecutingCommands] = useState(false);
@@ -513,7 +516,7 @@ export default function Pacing(props: {}) {
                 <Stack direction="row">
                     <Button onClick={handleCopyPaceOrder}>Copy current grid order</Button>
                     <Box sx={{ position: 'relative' }}>
-                        <Button onClick={handleCommitPaceOrder} disabled={desiredPaceOrder == null}>Commit new grid order</Button>
+                        <Button onClick={handleCommitPaceOrder} disabled={desiredPaceOrder == null || executingCommands}>Commit new grid order</Button>
                         <CircularProgress size={24} sx={{ 
                             top: "50%", 
                             left: "50%",

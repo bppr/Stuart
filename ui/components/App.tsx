@@ -10,6 +10,7 @@ import TelemetryViewer from './JSONViewer';
 
 import { IncidentData, Resolution } from '../../common/incident';
 import { ClockState } from '../../common/ClockState';
+import { PaceState } from '../../common/PaceState';
 
 import { Incident } from '../types/Incident';
 
@@ -37,6 +38,11 @@ const DEFAULT_CLOCK: ClockState = {
   }
 }
 const DEFAULT_TELEMETRY_JSON: any = {};
+const DEFAULT_PACE_STATE: PaceState = {
+  grid: [],
+  pits: [],
+  oneToGo: false,
+}
 
 function formatTime(seconds: number) {
   seconds = Math.round(seconds);
@@ -63,6 +69,7 @@ export function App() {
   const [incidents, setIncidents] = useState(INITIAL_INCIDENTS);
   const [clock, setClock] = useState(DEFAULT_CLOCK);
   const [telemetryJson, setTelemetryJson] = useState(DEFAULT_TELEMETRY_JSON);
+  const [paceState, setPaceState] = useState(DEFAULT_PACE_STATE);
 
   function addIncident(incident: IncidentData) {
     setIncidents((prevIncidents) => {
@@ -93,6 +100,7 @@ export function App() {
     sdk.receive('incident-data', addIncident);
     sdk.receive('clock-update', (message: ClockState) => setClock(message));
     sdk.receive('telemetry-json', (message: any) => setTelemetryJson(message));
+    sdk.receive('pace-state', (message: PaceState) => setPaceState(message));
   }
 
   // clear all incidents, triggering a re-render
@@ -162,7 +170,7 @@ export function App() {
           }
         </div>
         <div hidden={selectedTab !== 1}> {/* Pacing */}
-          <Pacing />
+          <Pacing paceOrder={paceState} />
         </div>
         <div hidden={selectedTab !== 2}> {/* Telemetry */}
           <TelemetryViewer sourceJson={telemetryJson} />

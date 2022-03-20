@@ -1,7 +1,7 @@
 declare module 'node-irsdk-2021' {
   export type SessionFlag = "StartHidden" | string;
-  export type CarSessionFlag = "Servicible" | string;
-  export type SessionState = "Racing" | string;
+  export type CarSessionFlag = "Servicible" | "Black" | "Repair" | string;
+  export type SessionState = "GetInCar" | "ParadeLaps" | "Racing" | "CoolDown" | string;
 
   export interface TelemetryData {
     timestamp: Date
@@ -66,11 +66,11 @@ declare module 'node-irsdk-2021' {
   }
 
   type RpySrchMode = "ToStart" | "ToEnd" | "PrevSession" | "NextSession" | "PrevLap" | "NextLap" | "PrevFrame" | "NextFrame" | "PrevIncident" | "NextIncident";
-  enum ChatCommand {
-    Macro = 0,
-    BeginChat = 1,
-    Reply = 2,
-    Cancel = 3,
+  const ChatCommand = {
+    Macro: 0,
+    BeginChat: 1,
+    Reply: 2,
+    Cancel: 3,
   }
   export class SDKInstance {
     on(event: string, handler: (data: any) => void)

@@ -12,18 +12,6 @@ import _ from 'lodash';
 
 export type Session = { type: SessionType }
 
-export type Driver = {
-  carIndex: number
-  name: string
-  userId: number
-  teamId: number
-  teamName: string
-  incidentCount: number
-  teamIncidentCount: number
-  isAi: boolean
-  isPaceCar: boolean
-}
-
 export type CarState = {
   index: number
   number: string
@@ -38,6 +26,7 @@ export type CarState = {
   paceLine: number
   position: number
   classPosition: number
+  isPaceCar: boolean
 }
 
 export enum SessionType {
