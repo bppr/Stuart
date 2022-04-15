@@ -9,6 +9,7 @@ import lapCount from './state/watchers/lap-count'
 import clock from './state/views/clock';
 import offTrack from './state/watchers/offtrack';
 import pacing from './state/views/pacing';
+import drivers from './state/views/drivers';
 
 import './ipc-inbox';
 import { throttleTime } from 'rxjs';
@@ -47,46 +48,44 @@ function startSDK(win: BrowserWindow) {
   let readFromFilePath = process.env["STUART_READ_LOG"];
   let writeToFilePath = process.env["STUART_WRITE_LOG"];
 
-  console.log("Arguments: ",process.argv);
+  console.log("Arguments: ", process.argv);
 
   let observer: IRSDKObserver;
-  if(readFromFilePath) {
+  if (readFromFilePath) {
     observer = IRSDKObserver.fromFile(readFromFilePath);
   } else {
     const sdk = iracing.init({
       sessionInfoUpdateInterval: 1000 /* ms */,
       telemetryUpdateInterval: 250
     });
-  
+
     sdk.on('Connected', () => console.log('connected to iRacing!'));
 
     observer = IRSDKObserver.fromIRSDK(sdk);
   }
 
-  win.on("ready-to-show",() => {
+  win.on("ready-to-show", () => {
     // create and publish the incident feed
     let incSub = observer.getEventFeed([
       incidentCount,
-     // lapCount, // for testing
+      // lapCount, // for testing
     ], [
       offTrack
     ]).subscribe(incData =>
       win.webContents.send('incident-data', incData)
     );
-  
-    // create and publish the various state observer feeds
-    let clockSub = observer.createViewFeed(clock).subscribe(clockState =>
-      win.webContents.send('clock-update', clockState)
-    );
 
+    // create and publish the various state observer feeds
+    observer.createViewFeed(clock).subscribe(clockState => win.webContents.send('clock-update', clockState));
+    observer.createViewFeed(drivers).subscribe(driverStates => win.webContents.send('drivers', driverStates));
     observer.createViewFeed(pacing).subscribe(paceState => win.webContents.send('pace-state', paceState));
-  
+
     // create a telemetry feed for just the data
-    let telemSub = observer.getRawTelemetryFeed().pipe(throttleTime(1000))
+    observer.getRawTelemetryFeed().pipe(throttleTime(1000))
       .subscribe(data => win.webContents.send("telemetry-json", data));
   });
 
-  if(writeToFilePath) {
+  if (writeToFilePath) {
     console.log("Logging telemetry data to: " + writeToFilePath);
     observer.toFile(writeToFilePath);
   }

@@ -18,19 +18,29 @@
  *   - personal incident count 
  */
 
-export type Flag = "Black" | "Meatball" | "Checkered" | "DQ";
+import { View } from "../streams";
+import { AppState } from "../../appState";
+import { CarSessionFlag, DriverState } from "../../../common/DriverState";
 
-export type Driver = {
-    name: string,
-    id: number,
+const getDriverState: View<AppState, DriverState[]> = (state) => {
+    return state.cars.filter(car => !car.isPaceCar)
+        .map(car => {
+            return {
+                car: {
+                    carColors: car.carColors,
+                    classColor: car.classColor,
+                    className: car.className,
+                    idx: car.idx,
+                    number: car.number,
+                },
+                lap: car.lap,
+                classPosition: car.officialClassPosition,
+                position: car.officialPosition,
+                teamIncidentCount: car.teamIncidentCount,
+                teamName: car.teamName,
+                flags: car.flags as CarSessionFlag[]
+            };
+        })
 }
 
-export type Car = {
-    id: number,
-    number: string,
-    driverId: number,
-    drivers: Driver[],
-    className: string,
-    classColor: string,   // a hex color value in the form "#FFFFFF"
-    flags: Flag[]
-}
+export default getDriverState;

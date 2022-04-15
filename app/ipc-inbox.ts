@@ -54,7 +54,7 @@ ipcMain.handle('send-chat-message', async (ev, data: string[]) => {
     sdk.execChatCmd(1);
     await typeMessage(msg, true);
     console.log("CHAT:", msg);
-    await sleep(33);
+    await sleep(1);
   }
   
   // re-focus stuart

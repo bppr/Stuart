@@ -1,15 +1,10 @@
 import { IncidentData } from "../../../common/incident";
-import { AppState, CarState, findCarByIdx } from "../../state";
+import { AppState, CarState } from "../../appState";
 import { StatefulWatcher } from "../streams";
-
-type ReplayTime = {
-    sessionNum: number,
-    sessionTime: number,
-}
 
 type CarTime = {
     // the very first start time that the car was in the target state
-    firstStartTime: ReplayTime,
+    firstStartTime: number,
     // the timestamp that the car most recently entered the target state
     startTime: number,
     // the timestamp that the car most recently left the target state
@@ -21,6 +16,11 @@ type CarTimesByIdx = CarTime[];
 
 const offTrackTimer: StatefulWatcher<AppState, CarTimesByIdx, IncidentData> = (oldState, newState, carTimesByIdx) => {
 
+    // reset all timers when session changes
+    if(oldState.live.session !== newState.live.session) {
+        carTimesByIdx = [];
+    }
+
     // genericize it here eventually
     const inTargetState = (car: CarState) => {
         return car.trackSurface == "OffTrack";
@@ -28,7 +28,7 @@ const offTrackTimer: StatefulWatcher<AppState, CarTimesByIdx, IncidentData> = (o
     const minimumOffTrackTime = 2.0;
     const cooldownTime = 10.0;
 
-    const now = newState.sessionTime;
+    const now = newState.live.time;
 
     let incidents: IncidentData[] = [];
     // short for "cars by index"
@@ -37,7 +37,7 @@ const offTrackTimer: StatefulWatcher<AppState, CarTimesByIdx, IncidentData> = (o
     // only look at "newState" for now
     for(let car of newState.cars) {
 
-        let carTimer: CarTime | undefined = cbIDX[car.index];
+        let carTimer: CarTime | undefined = cbIDX[car.idx];
         const carInState = inTargetState(car);
 
         if(carInState) {
@@ -46,10 +46,7 @@ const offTrackTimer: StatefulWatcher<AppState, CarTimesByIdx, IncidentData> = (o
                 // start the timer
                 carTimer = {
                     startTime: now,
-                    firstStartTime: {
-                        sessionNum: newState.sessionNum,
-                        sessionTime: newState.sessionTime,
-                    },
+                    firstStartTime: now,
                 }
                 //console.log(`car ${car.number} is off track, starting timer`);
             // if a timer has been started, then the timer is either running, or is in cooldown mode
@@ -88,9 +85,16 @@ const offTrackTimer: StatefulWatcher<AppState, CarTimesByIdx, IncidentData> = (o
                     if(durationInCooldownTime > cooldownTime) {
                         // emit an event and delete the timer
                         incidents.push({
-                            car,
-                            sessionNum: carTimer.firstStartTime.sessionNum,
-                            sessionTime: carTimer.firstStartTime.sessionTime,
+                            car: {
+                                currentLap: car.lap,
+                                currentLapPct: car.trackPositionPct,
+                                incidentCount: car.teamIncidentCount,
+                                index: car.idx,
+                                number: car.number,
+                                teamName: car.teamName,
+                            },
+                            sessionNum: newState.live.session,
+                            sessionTime: carTimer.firstStartTime,
                             type: "Off-Track",
                         });
                         carTimer = undefined;
@@ -101,9 +105,9 @@ const offTrackTimer: StatefulWatcher<AppState, CarTimesByIdx, IncidentData> = (o
         }
 
         if(carTimer === undefined) {
-            delete cbIDX[car.index];
+            delete cbIDX[car.idx];
         } else {
-            cbIDX[car.index] = carTimer;
+            cbIDX[car.idx] = carTimer;
         }
     }
 

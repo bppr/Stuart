@@ -14,10 +14,12 @@ import { PaceState } from '../../common/PaceState';
 
 import { Incident } from '../types/Incident';
 
-import { Grid, Stack, Typography, IconButton, Tabs, Tab } from "@mui/material";
+import { Grid, Stack, Typography, IconButton, Tabs, Tab, Box } from "@mui/material";
 import CloseIcon from '@mui/icons-material/CancelOutlined';
 
 import { TEST_CLOCK_STATE, TEST_INCIDENTS } from '../test-utils';
+import DriverList from './DriverList';
+import { DriverState } from '../../common/DriverState';
 
 
 const INITIAL_INCIDENTS: Incident[] = [];
@@ -43,6 +45,7 @@ const DEFAULT_PACE_STATE: PaceState = {
   pits: [],
   oneToGo: false,
 }
+const DEFAULT_DRIVERS: DriverState[] = [];
 
 function formatTime(seconds: number) {
   seconds = Math.round(seconds);
@@ -70,6 +73,7 @@ export function App() {
   const [clock, setClock] = useState(DEFAULT_CLOCK);
   const [telemetryJson, setTelemetryJson] = useState(DEFAULT_TELEMETRY_JSON);
   const [paceState, setPaceState] = useState(DEFAULT_PACE_STATE);
+  const [drivers, setDrivers] = useState(DEFAULT_DRIVERS);
 
   function addIncident(incident: IncidentData) {
     setIncidents((prevIncidents) => {
@@ -98,9 +102,10 @@ export function App() {
 
   function listen() {
     sdk.receive('incident-data', addIncident);
-    sdk.receive('clock-update', (message: ClockState) => setClock(message));
-    sdk.receive('telemetry-json', (message: any) => setTelemetryJson(message));
-    sdk.receive('pace-state', (message: PaceState) => setPaceState(message));
+    sdk.receive('clock-update', setClock);
+    sdk.receive('telemetry-json', setTelemetryJson);
+    sdk.receive('pace-state', setPaceState);
+    sdk.receive('drivers', setDrivers);
   }
 
   // clear all incidents, triggering a re-render
@@ -114,7 +119,7 @@ export function App() {
 
   // FOR TESTING!
   useEffect(() => {
-    for(let incident of TEST_INCIDENTS) {
+    for (let incident of TEST_INCIDENTS) {
       addIncident(incident);
     }
     setClock(TEST_CLOCK_STATE);
@@ -132,42 +137,46 @@ export function App() {
     setSelectedTab(newTab);
   }
 
-  return <Stack spacing={4}>
+  return <Box>
     <Header time={clock} />
-    <Grid container spacing={2}>
-      <Grid item xs={4} sx={{ minWidth: 400 }}>
-        <Stack spacing={2}>
-          <Stack direction="row" alignItems="center" justifyContent="flex-start" spacing={2}>
-            <Typography variant="h4">Incident Feed</Typography>
-            <IconButton
-              title="Clear All Incidents"
-              onClick={clearIncidents}>
-              <CloseIcon sx={{ height: 32, width: 32 }} />
-            </IconButton>
-          </Stack>
-          {
-            unresolvedIncidents.map((incident) => {
-              return <IncidentView
-                key={incident.id}
-                incident={incident} />
-            }
-            )
-          }
+    <Box sx={{
+      display: "flex",
+      backgroundColor:"#EEEEFF"
+    }}>
+      <Stack spacing={2}>
+        <Stack direction="row" alignItems="center" justifyContent="flex-start" spacing={2}>
+          <Typography variant="h4">Incident Feed</Typography>
+          <IconButton
+            title="Clear All Incidents"
+            onClick={clearIncidents}>
+            <CloseIcon sx={{ height: 32, width: 32 }} />
+          </IconButton>
         </Stack>
-      </Grid>
-      <Grid item xs={8} sx={{ minWidth: 400 }}>
+        {
+          unresolvedIncidents.map((incident) => {
+            return <IncidentView
+              key={incident.id}
+              incident={incident} />
+          }
+          )
+        }
+      </Stack>
+      <Box sx={{
+        flexGrow: 1,
+      }}>
         <Tabs value={selectedTab} onChange={handleTabSwitch}>
           <Tab label="Drivers" />
           <Tab label="Pacing" />
           <Tab label="Telemetry" />
         </Tabs>
         <div hidden={selectedTab !== 0}> {/* Drivers */}
-          {
+          {/* {
             Object.keys(acknowledgedIncidentsByCarNumber).map(num => <CarIncidents
               key={num}
               incidents={acknowledgedIncidentsByCarNumber[num]} />
             )
-          }
+          } */}
+          <DriverList drivers={drivers} incidents={incidents} />
         </div>
         <div hidden={selectedTab !== 1}> {/* Pacing */}
           <Pacing paceOrder={paceState} />
@@ -175,7 +184,7 @@ export function App() {
         <div hidden={selectedTab !== 2}> {/* Telemetry */}
           <TelemetryViewer sourceJson={telemetryJson} />
         </div>
-      </Grid>
-    </Grid>
-  </Stack>
+      </Box>
+    </Box>
+  </Box>
 }

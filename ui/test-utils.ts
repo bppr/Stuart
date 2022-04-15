@@ -9,7 +9,6 @@ const TEST_INCIDENTS: IncidentData[] = [
     car: {
       currentLap: 3,
       currentLapPct: 0.5,
-      driverName: "Zach C Miller",
       incidentCount: 1,
       index: 1,
       number: "49",
@@ -22,7 +21,6 @@ const TEST_INCIDENTS: IncidentData[] = [
     car: {
       currentLap: 4,
       currentLapPct: 0.53,
-      driverName: "Zach C Miller",
       incidentCount: 2,
       index: 1,
       number: "49",
@@ -35,7 +33,6 @@ const TEST_INCIDENTS: IncidentData[] = [
     car: {
       currentLap: 4,
       currentLapPct: 0.12,
-      driverName: "Brian Pratt2",
       incidentCount: 2,
       index: 2,
       number: "21",
@@ -48,7 +45,6 @@ const TEST_INCIDENTS: IncidentData[] = [
     car: {
       currentLap: 4,
       currentLapPct: 0.12,
-      driverName: "Joel del Maria del Sol Garbanzolo de el nombre largo",
       incidentCount: 2,
       index: 3,
       number: "8",

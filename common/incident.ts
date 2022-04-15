@@ -20,7 +20,6 @@ export type Resolution = 'Unresolved' | 'Acknowledged' | 'Dismissed' | 'Penalize
 export type IncidentCar = {
     index: number
     number: string
-    driverName: string
     teamName: string
     incidentCount: number
     currentLap: number

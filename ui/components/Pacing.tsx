@@ -391,7 +391,7 @@ function DesiredPaceOrderTable(props: {
                         // TODO turn red if being penalized?
                         return <TableRow key={"desired-order-car-" + car.car.idx}>
                             <TableCell>
-                                <ButtonGroup orientation='vertical'>
+                                <ButtonGroup orientation='horizontal'>
                                     <IconButton onClick={handleMoveCarUp(car.car.idx)}>
                                         <MoveUp />
                                     </IconButton>

@@ -1,7 +1,9 @@
 declare module 'node-irsdk-2021' {
-  export type SessionFlag = "StartHidden" | string;
-  export type CarSessionFlag = "Servicible" | "Black" | "Repair" | string;
-  export type SessionState = "GetInCar" | "ParadeLaps" | "Racing" | "CoolDown" | string;
+  export type SessionFlag = "StartHidden" | "StartGo" | "StartReady" | "OneLapToGreen" | "Caution" | "CautionWaving";
+  export type CarSessionFlag = "Servicible" | "Black" | "Repair";
+  export type SessionState = "GetInCar" | "ParadeLaps" | "Racing" | "CoolDown" ;
+  export type SessionType = "Race" | "Qualifying" | "Practice" ;
+  export type TrackSurface = "OnTrack" | "OffTrack" | "NotInWorld" | "AproachingPits" | "InPitStall" ; // sic: "AproachingPits" is spelled wrong in the telemetry data
 
   export interface TelemetryData {
     timestamp: Date
@@ -19,14 +21,25 @@ declare module 'node-irsdk-2021' {
       CarIdxPaceRow: number[]
       CarIdxPosition: number[]
       CarIdxClassPosition: number[]
-      CarIdxSessionFlags: SessionFlag[][]
+      CarIdxSessionFlags: CarSessionFlag[][]
       PaceMode: number
-      CarIdxTrackSurface: string
+      CarIdxTrackSurface: TrackSurface,
+      SessionFlags: SessionFlag[]
     }
   }
 
   export interface SessionDriver {
     CarIdx: number
+    AbbrevName: string,
+    CarClassColor: number,
+    CarClassID: number,
+    CarClassShortName: string,
+    CarDesignStr: string,
+    CarScreenName: string,
+    CarScreenNameShort: string,
+    IRating: number,
+    UserId: number,
+    LicString: string,
     TeamName: string
     UserName: string
     CarNumber: string
@@ -34,10 +47,12 @@ declare module 'node-irsdk-2021' {
     CarIsAI: number
     CarIsPaceCar: number
     UserID: number
+    CurDriverIncidentCount: number
   }
 
   export interface SessionData {
-    SessionType: string
+    SessionType: SessionType,
+
     ResultsFastestLap: {
       CarIdx: number
       FastestLap: number

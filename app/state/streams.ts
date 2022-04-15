@@ -7,7 +7,7 @@
 
 import iracing from 'node-irsdk-2021';
 import { combineLatest, distinctUntilChanged, merge, fromEvent, map, mergeMap, Observable, of, pairwise, pluck, ReplaySubject, scan, Subject } from 'rxjs';
-import { AppState, CarState, Session, SessionType } from '../state';
+import { AppState, toAppState } from '../appState';
 import equal from 'deep-equal';
 import fs from 'fs';
 import readline from 'readline';
@@ -38,76 +38,6 @@ function toStateful<State, Event>(watcher: Watcher<State, Event>) :StatefulWatch
  * A View is a function that observes the state and constructs a specific view of some relevant fields.
  */
 export type View<State, V> = (state: State) => V;
-
-function getTrackLength(sesh: iracing.SessionData): number {
-    const trackLengthStr = sesh.data.WeekendInfo.TrackLength;
-    const trackLengthRegex = new RegExp("^(\\d+(\\.\\d+)?) (\\w+)$");
-    const match = trackLengthRegex.exec(trackLengthStr);
-  
-    if (match) {
-      const trackLength = +(match[1]);
-      const distanceUnit = match[3];
-  
-      return trackLength * (distanceUnit == "km" ? 1000 : 1609.344)
-    }
-  
-    return 0;
-}
-
-/**
- * Generates a new AppState based on the latest session and telemetry data
- */
-function toAppState(session: iracing.SessionData, telemetry: iracing.TelemetryData): AppState {
-    let cars: CarState[] = session.data.DriverInfo.Drivers.map(driver => {
-        let index = driver.CarIdx;
-        let car: CarState = {
-            index,
-            driverName: driver.UserName,
-            currentLap: telemetry.values.CarIdxLap[index],
-            currentLapPct: telemetry.values.CarIdxLapDistPct[index],
-            incidentCount: driver.TeamIncidentCount,
-            number: driver.CarNumber,
-            onPitRoad: false, // TODO
-            paceLine: telemetry.values.CarIdxPaceLine[index],
-            paceRow: telemetry.values.CarIdxPaceRow[index],
-            trackSurface: telemetry.values.CarIdxTrackSurface[index],
-            teamName: driver.TeamName,
-            position: telemetry.values.CarIdxPosition[index],
-            classPosition: telemetry.values.CarIdxClassPosition[index],
-            isPaceCar: driver.CarIsPaceCar != 0
-        };
-        return car;
-    });
-
-    let sessions: Session[] = session.data.SessionInfo.Sessions.map(session => {
-        let sesh: Session =
-         {
-            type: SessionType.Unknown, // TODO fix this
-        }
-
-        return sesh;
-    });
-
-    let appState: AppState = {
-        camCarIdx: telemetry.values.CamCarIdx,
-        camPaused: telemetry.values.ReplayPlaySpeed == 0,
-        cars,
-        findCar: (carNum: string) => {
-            return cars.find(c=> c.number === carNum);
-        },
-        replaySessionNum: telemetry.values.ReplaySessionNum,
-        replaySessionTime: telemetry.values.ReplaySessionTime,
-        sessionNum: telemetry.values.SessionNum,
-        sessionTime: telemetry.values.SessionTime,
-        sessionType: SessionType.Unknown, // TODO
-        sessions,
-        trackLength: getTrackLength(session),
-        trackLengthDisplay: session.data.WeekendInfo.TrackLength,
-        sessionFlags: [], // TODO
-    };
-
-    return appState;
-}
 
 type IRState = [iracing.TelemetryData, iracing.SessionData];
 
@@ -152,9 +82,10 @@ export class IRSDKObserver {
         });
     }
 
-    // A subject that replays at least the most recent state, possibly more
+    // The original source observable of IRacing telemetry data.
     private state: Observable<IRState>;
 
+    // An observable that emits all app state since the connection to iracing was established
     private eventsAppState: Observable<AppState>;
     // An observable (probably a subject) that reports only the most recent state
     private viewsAppState: Observable<AppState>;

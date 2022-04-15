@@ -37,7 +37,7 @@ export default function CarIncidents(props: { incidents: Incident[]}) {
         <Avatar>{car.number}</Avatar>
       </Badge>
       <Stack sx={{ marginLeft: 2 }}>
-        <Typography variant="subtitle2">{car.driverName}</Typography>
+        <Typography variant="subtitle2">{car.teamName}</Typography>
         <Typography sx={{ color: "secondary" }} variant="caption">{"Team: " + car.teamName}</Typography>
       </Stack>
     </AccordionSummary>

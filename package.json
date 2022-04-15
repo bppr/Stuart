@@ -11,7 +11,8 @@
     "lodash": "^4.17.21",
     "node-irsdk-2021": "^0.0.1",
     "react-json-view": "^1.21.3",
-    "rxjs": "^7.5.5"
+    "rxjs": "^7.5.5",
+    "sendkeys": "^1.1.1"
   },
   "devDependencies": {
     "@emotion/react": "^11.7.1",

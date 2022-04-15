@@ -1,5 +1,5 @@
 import { Watcher } from "../streams";
-import { AppState, findCarByIdx } from "../../state";
+import { AppState } from "../../appState";
 import { IncidentData } from "../../../common/incident";
 
 /**
@@ -7,20 +7,24 @@ import { IncidentData } from "../../../common/incident";
  */
 const lapCount: Watcher<AppState, IncidentData> = (oldState, newState) => {
     // list of [prev, current] by car number
-    const carStates = newState.cars.map(car => [findCarByIdx(oldState, car.index), car]);
+    const carStates = newState.cars.map(car => [oldState.findCarByIdx(car.idx), car]);
 
     return carStates
-        .filter(([prev, current]) => prev && current!.currentLap > prev.currentLap)
+        .filter(([prev, current]) => prev && current!.lap > prev.lap)
         .map(([prev, current]) => {
-            const { index, number, teamName, driverName, incidentCount, currentLap, currentLapPct } = current!;
-            const car = { index, number, teamName, driverName, incidentCount, currentLap, currentLapPct };
-
             const inc: IncidentData = {
-                sessionNum: newState.sessionNum,
-                sessionTime: newState.sessionTime,
-                car,
+                sessionNum: newState.live.session,
+                sessionTime: newState.live.time,
+                car: {
+                    currentLap: current!.lap,
+                    currentLapPct: current!.trackPositionPct,
+                    incidentCount: current!.teamIncidentCount,
+                    index: current!.idx,
+                    number: current!.number,
+                    teamName: current!.teamName,
+                },
                 type: "Other",
-                description: "Lap " + car.currentLap,
+                description: "Lap " + current!.lap,
             }
 
             return inc;

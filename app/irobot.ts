@@ -1,5 +1,6 @@
 import ffi from "ffi-napi";
 import { Key, keyboard } from "@nut-tree/nut-js";
+import sendkeys from 'sendkeys';
 
 const IRACING_WINDOW_TITLE = "iRacing.com Simulator";
 const IRACING_WINDOW_CLASS = "SimWinClass";
@@ -43,12 +44,25 @@ export async function focusIRacingWindow() : Promise<void> {
     focusWindow(IRACING_WINDOW_CLASS, IRACING_WINDOW_TITLE);
 }
 
-export async function typeMessage(msg: string, printLn = false) : Promise<void> {
-    keyboard.config.autoDelayMs=0;
+async function typeMessageNutjs(msg: string, printLn = false) : Promise<void> {
+    keyboard.config.autoDelayMs=1;
     await keyboard.type(msg);
+    if(printLn) {
     await keyboard.pressKey(Key.Return);
     await sleep(30);
     await keyboard.releaseKey(Key.Return);
+    }
+}
+
+async function typeMessageSendkeys(msg: string, printLn = false) {
+    if(printLn) {
+        msg = msg + "\r";
+    }
+    await sendkeys(msg);
+}
+
+export function typeMessage(msg: string, printLn = false) : Promise<void> {
+    return typeMessageSendkeys(msg, printLn);
 }
 
 export function sleep(ms: number) {

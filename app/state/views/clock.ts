@@ -1,5 +1,5 @@
 
-import { AppState, findCarByIdx } from "../../state";
+import { AppState } from "../../appState";
 import { View} from "../streams";
 import { ClockState } from "../../../common/ClockState";
 
@@ -7,22 +7,22 @@ import { ClockState } from "../../../common/ClockState";
  * Clock is a view of the AppState that is concerned with the current timing information for the live session and the 
  */
 const clock: View<AppState, ClockState> = (state) => {
-    const cCar = findCarByIdx(state, state.camCarIdx);
+    const cCar = state.findCarByIdx(state.camera.carIdx);
 
     return {
         live: {
-            num: state.sessionNum,
-            time: state.sessionTime,
+            num: state.live.session,
+            time: state.live.time,
         },
         replay: {
-            num: state.replaySessionNum,
-            time: state.replaySessionTime,
+            num: state.camera.time.session,
+            time: state.camera.time.time,
         },
-        camSpeed: state.camPaused ? 0 : 1, // TODO fix this in AppState
+        camSpeed: state.camera.speed,
         camCar: {
-            index: cCar?.index || -1,
+            index: cCar?.idx || -1,
             number: cCar?.number || "---",
-            driverName: cCar?.driverName || "Unknown",
+            driverName: cCar?.teamName || "Unknown",
         },
     }
 }
