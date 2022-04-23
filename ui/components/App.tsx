@@ -3,26 +3,25 @@ import _ from 'lodash';
 
 import sdk from '../sdk';
 import IncidentView from './Incident';
-import CarIncidents from './CarIncidents';
 import Header from './Header';
 import Pacing from './Pacing';
 import TelemetryViewer from './JSONViewer';
 
-import { IncidentData, Resolution } from '../../common/incident';
+import { Incident } from '../../common/incident';
 import { ClockState } from '../../common/ClockState';
 import { PaceState } from '../../common/PaceState';
 
-import { Incident } from '../types/Incident';
+import { IncidentRecord, Resolution } from '../types/Incident';
 
-import { Grid, Stack, Typography, IconButton, Tabs, Tab, Box } from "@mui/material";
+import { Stack, Typography, IconButton, Tabs, Tab, Box, Collapse } from "@mui/material";
 import CloseIcon from '@mui/icons-material/CancelOutlined';
+import { TransitionGroup } from 'react-transition-group';
 
-import { TEST_CLOCK_STATE, TEST_INCIDENTS } from '../test-utils';
 import DriverList from './DriverList';
 import { DriverState } from '../../common/DriverState';
 
 
-const INITIAL_INCIDENTS: Incident[] = [];
+const INITIAL_INCIDENTS: IncidentRecord[] = [];
 const DEFAULT_CLOCK: ClockState = {
   camCar: {
     driverName: "unknown",
@@ -75,7 +74,7 @@ export function App() {
   const [paceState, setPaceState] = useState(DEFAULT_PACE_STATE);
   const [drivers, setDrivers] = useState(DEFAULT_DRIVERS);
 
-  function addIncident(incident: IncidentData) {
+  function addIncident(incident: Incident) {
     setIncidents((prevIncidents) => {
       const id = Math.max(0, ...(prevIncidents.map(inc => inc.id))) + 1;
 
@@ -117,17 +116,8 @@ export function App() {
   // only listen on the first render
   useEffect(listen, []);
 
-  // FOR TESTING!
-  useEffect(() => {
-    for (let incident of TEST_INCIDENTS) {
-      addIncident(incident);
-    }
-    setClock(TEST_CLOCK_STATE);
-  }, []);
-
   let acknowledgedIncidents = _.filter(incidents, i => i.resolution == "Acknowledged" || i.resolution == "Penalized")
-  let acknowledgedIncidentsByCarNumber = _.groupBy(acknowledgedIncidents, i => i.data.car.number);
-
+  
   let unresolvedIncidents = incidents.filter((inc) => {
     return inc.resolution == "Unresolved";
   });
@@ -141,9 +131,9 @@ export function App() {
     <Header time={clock} />
     <Box sx={{
       display: "flex",
-      backgroundColor:"#EEEEFF"
+      gap: 4
     }}>
-      <Stack spacing={2}>
+      <Stack spacing={2} sx={{ width:360 }}>
         <Stack direction="row" alignItems="center" justifyContent="flex-start" spacing={2}>
           <Typography variant="h4">Incident Feed</Typography>
           <IconButton
@@ -152,14 +142,16 @@ export function App() {
             <CloseIcon sx={{ height: 32, width: 32 }} />
           </IconButton>
         </Stack>
+        <TransitionGroup>
         {
-          unresolvedIncidents.map((incident) => {
-            return <IncidentView
-              key={incident.id}
-              incident={incident} />
-          }
+          unresolvedIncidents.map((incident) => 
+          <Collapse key={incident.id}>
+            <IncidentView
+                incident={incident} />
+          </Collapse>
           )
         }
+        </TransitionGroup>
       </Stack>
       <Box sx={{
         flexGrow: 1,
@@ -170,12 +162,6 @@ export function App() {
           <Tab label="Telemetry" />
         </Tabs>
         <div hidden={selectedTab !== 0}> {/* Drivers */}
-          {/* {
-            Object.keys(acknowledgedIncidentsByCarNumber).map(num => <CarIncidents
-              key={num}
-              incidents={acknowledgedIncidentsByCarNumber[num]} />
-            )
-          } */}
           <DriverList drivers={drivers} incidents={incidents} />
         </div>
         <div hidden={selectedTab !== 1}> {/* Pacing */}

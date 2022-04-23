@@ -1,4 +1,5 @@
 
+import { DriverCar } from '@common/DriverState';
 import _ from 'lodash';
 import iracing from 'node-irsdk-2021';
 import { HexColor, CarColors } from '../common/util'
@@ -34,6 +35,20 @@ export function getTrackLength(sesh: iracing.SessionData): number {
 export type TimeStamp = {
   session: number,
   time: number,
+}
+
+export function toDriverCar(car: CarState) : DriverCar {
+  return {
+    class: {
+      color: car.classColor,
+      name: car.className,
+    },
+    color: car.carColors,
+    driverName: car.drivers[0].name, // TODO figure out how to get the current driver of the car
+    idx: car.idx,
+    number: car.number,
+    teamName: car.teamName,
+  }
 }
 
 export type AppState = {

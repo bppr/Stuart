@@ -1,4 +1,4 @@
-import { Card, CardHeader, Stack, Typography, Avatar, IconButton, ButtonGroup, Table, TableBody, TableCell, TableRow, Paper, TableContainer, TableHead, Button, Grid, CircularProgress, Box } from '@mui/material'
+import { Card, CardHeader, Stack, Typography, Avatar, IconButton, ButtonGroup, Table, TableBody, TableCell, TableRow, Paper, TableContainer, TableHead, Button, Grid, CircularProgress, Box, Divider, Tooltip } from '@mui/material'
 import EndOfLine from '@mui/icons-material/VerticalAlignBottom';
 import WaveAround from '@mui/icons-material/UTurnLeft';
 import MoveUp from '@mui/icons-material/KeyboardArrowUp';
@@ -6,7 +6,6 @@ import MoveDown from '@mui/icons-material/KeyboardArrowDown';
 import React, { useState } from 'react'
 import { PaceCarInfo, PaceState } from "../../common/PaceState";
 import sdk from "../sdk";
-import { stubString } from 'lodash';
 
 let TEST_PACE_ORDER: PaceState = {
     oneToGo: false,
@@ -15,8 +14,18 @@ let TEST_PACE_ORDER: PaceState = {
             car: {
                 idx: 1,
                 driverName: "Joey Logano",
-                carNumber: "68",
+                number: "68",
                 officialPosition: 1,
+                class: {
+                    color: "#0000FF",
+                    name: "Street Stock",
+                },
+                color: {
+                    primary: "#FF0000",
+                    secondary: "#00FF00",
+                    tertiary: "#0000FF",
+                },
+                teamName: "Team JL Racing",
             },
             line: 0,
             row: 0
@@ -24,8 +33,18 @@ let TEST_PACE_ORDER: PaceState = {
             car: {
                 idx: 2,
                 driverName: "Suzie Queue",
-                carNumber: "9",
+                number: "9",
                 officialPosition: 2,
+                class: {
+                    color: "#0000FF",
+                    name: "Street Stock",
+                },
+                color: {
+                    primary: "#FF0000",
+                    secondary: "#00FF00",
+                    tertiary: "#0000FF",
+                },
+                teamName: "SuperSuze Motorsports"
             },
             line: 1,
             row: 0,
@@ -33,8 +52,18 @@ let TEST_PACE_ORDER: PaceState = {
             car: {
                 idx: 3,
                 driverName: "Mike Racecar",
-                carNumber: "18",
+                number: "18",
                 officialPosition: 4,
+                class: {
+                    color: "#0000FF",
+                    name: "Street Stock",
+                },
+                color: {
+                    primary: "#FF0000",
+                    secondary: "#00FF00",
+                    tertiary: "#0000FF",
+                },
+                teamName: "Gabir Motors"
             },
             line: 0,
             row: 1,
@@ -42,8 +71,18 @@ let TEST_PACE_ORDER: PaceState = {
             car: {
                 idx: 4,
                 driverName: "Someone Else",
-                carNumber: "000",
+                number: "000",
                 officialPosition: 3,
+                class: {
+                    color: "#0000FF",
+                    name: "Street Stock",
+                },
+                color: {
+                    primary: "#FF0000",
+                    secondary: "#00FF00",
+                    tertiary: "#0000FF",
+                },
+                teamName: "Half-fast Endeavors"
             },
             line: 1,
             row: 2
@@ -52,49 +91,30 @@ let TEST_PACE_ORDER: PaceState = {
     pits: [{
         idx: 5,
         driverName: "Mister Lazy",
-        carNumber: "12",
+        number: "12",
         officialPosition: 5,
+        class: {
+            color: "#0000FF",
+            name: "Street Stock",
+        },
+        color: {
+            primary: "#FF0000",
+            secondary: "#00FF00",
+            tertiary: "#0000FF",
+        },
+        teamName: "TEST TEAM PLEASE IGNORE"
     }]
 }
 
-function GridCarElement(props: {
+function GridStackCar(props: {
     car: PaceCarInfo
 }) {
-    function handleWaveBy(ev: any) {
-        sendIRCommands([`!waveby ${props.car.carNumber}`]);
-    }
-    function handleEOL(ev: any) {
-        sendIRCommands([`!eol ${props.car.carNumber}`]);
-    }
-
-
-    return <Card>
-        <CardHeader
-            avatar={
-                <Avatar>P{props.car.officialPosition}</Avatar>
-            }
-            title={"#" + props.car.carNumber + " " + props.car.driverName}
-            action={<ButtonGroup>
-                <IconButton onClick={handleEOL} >
-                    <EndOfLine />
-                </IconButton>
-                <IconButton onClick={handleWaveBy} >
-                    <WaveAround />
-                </IconButton>
-            </ButtonGroup>} />
-    </Card>
-}
-
-function PitCarElement(props: {
-    car: PaceCarInfo
-}) {
-    return <Card>
-        <CardHeader
-            avatar={
-                <Avatar>P{props.car.officialPosition}</Avatar>
-            }
-            title={"#" + props.car.carNumber + " " + props.car.driverName} />
-    </Card>
+    return <Paper elevation={1} sx={{display:"flex", alignItems: "center", padding:"2px", gap: 1}}>
+        <Avatar sx={{ width: 24, height: 24, fontSize: 12, bgcolor: props.car.class.color, color: "black" }} variant="rounded">
+          {props.car.number}
+        </Avatar>
+        <Typography noWrap variant="subtitle1" sx={{flexGrow:1}}>{props.car.driverName}</Typography>
+    </Paper>
 }
 
 /**
@@ -103,69 +123,43 @@ function PitCarElement(props: {
  * "wave around" commands, but those in the pits may not.
  */
 function GridStack(props: {
-    grid: PaceState
+    grid: PaceState,
+    width: number,
 }) {
 
     // display a grid of cars that are currently on track, then a space, then cars currently in the pits
+    
+    // display cars in a stack, with margins indicating left or right, if double-file
+    let doubleFile = props.grid.grid.some(spot => spot.line != 0);
 
-    // determine the rectangular size of the grid
-    let maxLane = 0;
-    let maxRow = 0;
-    for (let gridSpot of props.grid.grid) {
-        maxLane = Math.max(gridSpot.line);
-        maxRow = Math.max(gridSpot.row);
-    }
-    const lines = maxLane + 1;
-    const rows = maxRow + 1;
-
-    // create a sparse array filled with the known cars
-    let gridSpots = [];
-    for (let row = 0; row < rows; ++row) {
-        gridSpots.push((new Array(lines).fill(null)));
-    }
-
-    // sparse arrays
-    for (let gridSpot of props.grid.grid) {
-        gridSpots[gridSpot.row][gridSpot.line] = gridSpot.car;
-    }
-
-    let gridTable = <Table>
-        <TableBody>
-            {
-                // each element of gridSpots is a row
-                gridSpots.map((gridRow, rowIndex) => {
-                    // each row should be a horizontal stack of the elements in the lane
-                    return <TableRow key={"grid-row-" + rowIndex}>
-                        {
-                            gridRow.map((car, lineIndex) => {
-                                const spotKey = "grid-spot-" + rowIndex + "-" + lineIndex;
-                                return <TableCell key={spotKey}>{
-                                    car != null &&
-                                    <GridCarElement car={car} />
-                                }
-                                </TableCell>
-
-                            })
-                        }
-                    </TableRow>
-                })
-            }
-        </TableBody>
-    </Table>
-
-    let pitStack = <Stack>
-        {
-            props.grid.pits.map((car, pitRowIndex) => {
-                return <PitCarElement car={car} key={"pit-row-" + pitRowIndex} />
-            })
+    let row = 0;
+    let gridStack: JSX.Element[] = [];
+    for(let i=0; i<props.grid.grid.length; ++i) {
+        const spot = props.grid.grid[i];
+        if(spot.row != row && doubleFile) {
+            // add a divider
+            gridStack.push(<Divider key={"row-divider-" + row}/>);
+            row = spot.row;
         }
-    </Stack>
+        // if double file, add a margin on the proper side
+        const paddingLeft = (doubleFile && spot.line == 1) ? 2 : 0;
+        const paddingRight = (doubleFile && spot.line == 0) ? 2 : 0;
+        gridStack.push(<Box key={spot.car.idx} sx={{
+            display: "block",
+            paddingLeft,
+            paddingRight
+        }}>
+            <GridStackCar car={spot.car} />
+        </Box>);
+    }
 
-    return <Stack>
-        <Typography>Current Order</Typography>
-        {gridTable}
-        <Typography>Cars in Pits</Typography>
-        {pitStack}
+    return <Stack spacing={"4px"} sx={{width: props.width}}>
+        <Typography>Current Grid Order</Typography>
+        {gridStack}
+        <Typography>Cars In Pits</Typography>
+        {
+            props.grid.pits.map(pitCar => <GridStackCar car={pitCar} key={pitCar.idx} />)
+        }
     </Stack>
 }
 
@@ -222,7 +216,7 @@ function createDesiredPaceOrder(pace: PaceState): DesiredPaceOrder {
         commands: [
             {
                 type: "set_order_to",
-                carNumbers: cars.map(c => c.carNumber),
+                carNumbers: cars.map(c => c.number),
             }
         ]
     };
@@ -246,7 +240,7 @@ function moveCarUp(paceOrder: DesiredPaceOrder, carId: number): DesiredPaceOrder
 
         let newCommand: GridCommand = {
             type: "set_order_to",
-            carNumbers: newOrder.map(car => car.car.carNumber),
+            carNumbers: newOrder.map(spot => spot.car.number),
         }
 
         if (lastCommand.type === "set_order_to") {
@@ -311,7 +305,7 @@ function moveToEnd(paceOrder: DesiredPaceOrder, carId: number, waveAround: boole
         return {
             cars: restOfTheCars,
             commands: [...paceOrder.commands, {
-                carNumbers: [targetCar.car.carNumber],
+                carNumbers: [targetCar.car.number],
                 type: waveAround ? "wave_around" : "end_of_line",
             }],
         };
@@ -370,7 +364,7 @@ function DesiredPaceOrderTable(props: {
     }
 
     return <TableContainer component={Paper}>
-        <Table>
+        <Table size="small">
             <TableHead>
                 <TableRow>
                     <TableCell>Move</TableCell> {/* up/down buttons */}
@@ -390,7 +384,7 @@ function DesiredPaceOrderTable(props: {
 
                         // TODO turn red if being penalized?
                         return <TableRow key={"desired-order-car-" + car.car.idx}>
-                            <TableCell>
+                            <TableCell padding="checkbox">
                                 <ButtonGroup orientation='horizontal'>
                                     <IconButton onClick={handleMoveCarUp(car.car.idx)}>
                                         <MoveUp />
@@ -409,16 +403,20 @@ function DesiredPaceOrderTable(props: {
                                 {car.car.officialPosition}
                             </TableCell>
                             <TableCell>
-                                {`#${car.car.carNumber} ${car.car.driverName}`}
+                                {`#${car.car.number} ${car.car.driverName}`}
                             </TableCell>
                             <TableCell>
                                 <ButtonGroup>
-                                    <IconButton onClick={handleMoveCarEOL(car.car.idx)}>
-                                        <EndOfLine />
-                                    </IconButton>
-                                    <IconButton onClick={handleMoveCarWB(car.car.idx)}>
-                                        <WaveAround />
-                                    </IconButton>
+                                    <Tooltip enterDelay={500} title="End-of-Line Penalty">
+                                        <IconButton onClick={handleMoveCarEOL(car.car.idx)}>
+                                            <EndOfLine />
+                                        </IconButton>
+                                    </Tooltip>
+                                    <Tooltip enterDelay={500} title="Wave Around">
+                                        <IconButton onClick={handleMoveCarWB(car.car.idx)}>
+                                            <WaveAround />
+                                        </IconButton>
+                                    </Tooltip>
                                 </ButtonGroup>
                             </TableCell>
                         </TableRow>
@@ -507,31 +505,29 @@ export default function Pacing(props: {
 
     // display current pacing order on the left
     // display edit buttons and target pacing order on the right
-    return <Grid container>
-        <Grid item xs={4}>
-            <GridStack grid={paceOrder} />
-        </Grid>
-        <Grid item xs={8}>
-            <Stack>
-                <Stack direction="row">
-                    <Button onClick={handleCopyPaceOrder}>Copy current grid order</Button>
-                    <Box sx={{ position: 'relative' }}>
-                        <Button onClick={handleCommitPaceOrder} disabled={desiredPaceOrder == null || executingCommands}>Commit new grid order</Button>
-                        <CircularProgress size={24} sx={{ 
-                            top: "50%", 
-                            left: "50%",
-                             position: "absolute",
-                              marginTop: "-12px",
-                              marginLeft: "-12px" ,
-                              display: executingCommands ? "block" : "none"}} />
-                    </Box>
-                </Stack>
-                {desiredPaceOrder != null &&
-                    <DesiredPaceOrderTable
-                        currentPaceOrder={paceOrder}
-                        desiredOrder={desiredPaceOrder}
-                        setDesiredOrder={setDesiredPaceOrder} />}
+    return <Box sx={{display: "flex", gap: 2}} >
+        <GridStack grid={paceOrder} width={200} />
+        <Stack sx={{
+            flexGrow: 1
+        }}>
+            <Stack direction="row" spacing={1}>
+                <Button onClick={handleCopyPaceOrder} variant="contained">Copy current grid order</Button>
+                <Box sx={{ position: 'relative' }}>
+                    <Button onClick={handleCommitPaceOrder} variant="contained" disabled={desiredPaceOrder == null || executingCommands}>Commit new grid order</Button>
+                    <CircularProgress size={24} sx={{ 
+                        top: "50%", 
+                        left: "50%",
+                            position: "absolute",
+                            marginTop: "-12px",
+                            marginLeft: "-12px" ,
+                            display: executingCommands ? "block" : "none"}} />
+                </Box>
             </Stack>
-        </Grid>
-    </Grid>
+            {desiredPaceOrder != null &&
+                <DesiredPaceOrderTable
+                    currentPaceOrder={paceOrder}
+                    desiredOrder={desiredPaceOrder}
+                    setDesiredOrder={setDesiredPaceOrder} />}
+        </Stack>
+    </Box>
 }

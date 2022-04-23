@@ -1,13 +1,10 @@
 /**
  * Not actually information about the pace car. Information about a car that is specific to its pace position
  */
+import { DriverCar } from "./DriverState";
 
-export type PaceCarInfo = {
-    // the index number of the car. "carIdx". Possibly not used
-    idx: number;
-    driverName: string;
-    carNumber: string;
-    officialPosition: number;
+export type PaceCarInfo =  DriverCar & {
+    officialPosition: number; 
 };
 
 export type PaceSpot = {

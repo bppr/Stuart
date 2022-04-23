@@ -1,12 +1,14 @@
-import { IncidentData, Resolution } from '../../common/incident';
+import { Incident } from '../../common/incident';
 
-export type Incident = {
+export type Resolution = "Unresolved" | "Acknowledged" | "Dismissed" | "Penalized" | "Deleted";
+
+export type IncidentRecord = {
   // a unique ID for this incident
   id: number;
   // the current status of this incident
   resolution: Resolution;
   // the details of this incident
-  data: IncidentData;
+  data: Incident;
   // changes the resolution of this incident to the given value, updating any state as necessary.
   resolve: (_: Resolution) => void;
 };

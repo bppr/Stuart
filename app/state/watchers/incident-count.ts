@@ -1,11 +1,11 @@
 import { Watcher } from "../streams";
 import { AppState, CarState } from "../../appState";
-import { IncidentData } from "../../../common/incident";
+import { Incident } from "../../../common/incident";
 
 /**
  * incidentCount creates an "Incident Count" incident whenever a drivers incident count increases.
  */
-const incidentCount: Watcher<AppState, IncidentData> = (oldState, newState) => {
+const incidentCount: Watcher<AppState, Incident> = (oldState, newState) => {
     // list of [prev, current] by car number
 
     let oldCarsByIdx: CarState[] = [];
@@ -18,18 +18,27 @@ const incidentCount: Watcher<AppState, IncidentData> = (oldState, newState) => {
     return carStates
         .filter(([prev, current]) => prev && current!.teamIncidentCount > prev.teamIncidentCount)
         .map(([prev, current]) => {
-            const inc: IncidentData = {
-                sessionNum: newState.live.session,
-                sessionTime: newState.live.time,
+            const inc: Incident = {
                 car: {
-                    currentLap: current.lap,
-                    currentLapPct: current.trackPositionPct,
-                    incidentCount: current.teamIncidentCount,
-                    index: current.idx,
+                    class: {
+                        color: current.classColor,
+                        name: current.className,
+                    },
+                    color: current.carColors,
+                    driverName: current.drivers[0].name,
+                    idx: current.idx,
                     number: current.number,
                     teamName: current.teamName,
                 },
-                type: "Incident Count"
+                lap: current.lap,
+                time: {
+                    num: newState.live.session,
+                    time: newState.live.time,
+                },
+                trackPositionPct: current.trackPositionPct,
+
+                type: "Incident Count",
+                description: current.teamIncidentCount + "x",
             }
 
             return inc;

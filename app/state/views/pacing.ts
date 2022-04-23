@@ -7,7 +7,7 @@
  */
 
 import { View } from "../streams";
-import { AppState } from "../../appState";
+import { AppState, toDriverCar } from "../../appState";
 import { PaceState, PaceSpot, PaceCarInfo } from "../../../common/PaceState";
 
 const getPaceState: View<AppState, PaceState> = (state) => {
@@ -19,9 +19,7 @@ const getPaceState: View<AppState, PaceState> = (state) => {
         if(car.isPaceCar) { continue; }
         
         const pCar: PaceCarInfo = {
-            carNumber: car.number,
-            driverName: car.teamName,
-            idx: car.idx,
+            ...toDriverCar(car),
             officialPosition: car.officialPosition,
         };
 

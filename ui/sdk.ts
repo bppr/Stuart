@@ -1,4 +1,4 @@
-import { IncidentData } from "../common/incident";
+import { Incident } from "../common/incident";
 
 // see ui/types/api.d.ts
 declare var window: WindowWithSDK
@@ -10,9 +10,9 @@ function toMS(seconds: number): number {
   return (seconds * 1000) | 0
 }
 
-export function replay({ car, sessionNum, sessionTime }: IncidentData) {
-  const ms = toMS(Math.max(sessionTime - 2.0, 0));
-  window.api.replay(car.number, sessionNum, ms);
+export function replay(incident: Incident) {
+  const ms = toMS(Math.max(incident.time.time - 2.0, 0));
+  window.api.replay(incident.car.number, incident.time.num, ms);
 }
 
 export function pauseReplay() {

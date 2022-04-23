@@ -1,10 +1,13 @@
-import { IncidentData } from "../../../common/incident";
-import { AppState, CarState } from "../../appState";
+import { Incident } from "../../../common/incident";
+import { AppState, CarState, toDriverCar } from "../../appState";
 import { StatefulWatcher } from "../streams";
 
 type CarTime = {
     // the very first start time that the car was in the target state
-    firstStartTime: number,
+    firstStartTime: {
+        time: number,
+        trackPositionPct: number,
+    },
     // the timestamp that the car most recently entered the target state
     startTime: number,
     // the timestamp that the car most recently left the target state
@@ -14,7 +17,7 @@ type CarTime = {
 // sparse array?
 type CarTimesByIdx = CarTime[];
 
-const offTrackTimer: StatefulWatcher<AppState, CarTimesByIdx, IncidentData> = (oldState, newState, carTimesByIdx) => {
+const offTrackTimer: StatefulWatcher<AppState, CarTimesByIdx, Incident> = (oldState, newState, carTimesByIdx) => {
 
     // reset all timers when session changes
     if(oldState.live.session !== newState.live.session) {
@@ -30,7 +33,7 @@ const offTrackTimer: StatefulWatcher<AppState, CarTimesByIdx, IncidentData> = (o
 
     const now = newState.live.time;
 
-    let incidents: IncidentData[] = [];
+    let incidents: Incident[] = [];
     // short for "cars by index"
     let cbIDX = carTimesByIdx ? [...carTimesByIdx] : [];
 
@@ -46,7 +49,10 @@ const offTrackTimer: StatefulWatcher<AppState, CarTimesByIdx, IncidentData> = (o
                 // start the timer
                 carTimer = {
                     startTime: now,
-                    firstStartTime: now,
+                    firstStartTime: {
+                        time: newState.live.time,
+                        trackPositionPct: car.trackPositionPct,
+                    },
                 }
                 //console.log(`car ${car.number} is off track, starting timer`);
             // if a timer has been started, then the timer is either running, or is in cooldown mode
@@ -85,16 +91,13 @@ const offTrackTimer: StatefulWatcher<AppState, CarTimesByIdx, IncidentData> = (o
                     if(durationInCooldownTime > cooldownTime) {
                         // emit an event and delete the timer
                         incidents.push({
-                            car: {
-                                currentLap: car.lap,
-                                currentLapPct: car.trackPositionPct,
-                                incidentCount: car.teamIncidentCount,
-                                index: car.idx,
-                                number: car.number,
-                                teamName: car.teamName,
+                            car: toDriverCar(car),
+                            lap: car.lap,
+                            time: {
+                                time: carTimer.firstStartTime.time,
+                                num: newState.live.session,
                             },
-                            sessionNum: newState.live.session,
-                            sessionTime: carTimer.firstStartTime,
+                            trackPositionPct: carTimer.firstStartTime.trackPositionPct,
                             type: "Off-Track",
                         });
                         carTimer = undefined;

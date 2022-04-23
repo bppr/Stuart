@@ -19,28 +19,24 @@
  */
 
 import { View } from "../streams";
-import { AppState } from "../../appState";
-import { CarSessionFlag, DriverState } from "../../../common/DriverState";
+import { AppState, toDriverCar } from "../../appState";
+import { DriverState } from "../../../common/DriverState";
 
 const getDriverState: View<AppState, DriverState[]> = (state) => {
     return state.cars.filter(car => !car.isPaceCar)
         .map(car => {
-            return {
-                car: {
-                    carColors: car.carColors,
-                    classColor: car.classColor,
-                    className: car.className,
-                    idx: car.idx,
-                    number: car.number,
-                },
-                lap: car.lap,
+
+            const ds: DriverState = {
+                car: toDriverCar(car),
                 classPosition: car.officialClassPosition,
+                flags: car.flags,
+                lap: car.lap,
                 position: car.officialPosition,
                 teamIncidentCount: car.teamIncidentCount,
-                teamName: car.teamName,
-                flags: car.flags as CarSessionFlag[]
-            };
-        })
+            }
+
+            return ds;
+        });
 }
 
 export default getDriverState;
