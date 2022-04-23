@@ -64,9 +64,9 @@ export function CircularIncidentMap(props: {
             regularIcons.map(icon => <Avatar key={`inc-${icon.incidentId}`}
                 sx={{
                 position: "absolute",
-                width: 24,
-                height:  24,
-                fontSize:12,
+                width: 18,
+                height:  18,
+                fontSize: 9,
                 top: "50%",
                 left: "50%",
                 transform: `translateX(-50%) translateY(-50%) `+
@@ -83,7 +83,7 @@ export function CircularIncidentMap(props: {
                 position: "absolute",
                 width: 32,
                 height:  32,
-                fontSize:12,
+                fontSize:16,
                 top: "50%",
                 left: "50%",
                 transform: `translateX(-50%) translateY(-50%) `+

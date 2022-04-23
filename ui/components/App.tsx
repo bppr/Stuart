@@ -13,7 +13,7 @@ import { PaceState } from '../../common/PaceState';
 
 import { IncidentRecord, Resolution } from '../types/Incident';
 
-import { Stack, Typography, IconButton, Tabs, Tab, Box, Collapse } from "@mui/material";
+import { Stack, Typography, IconButton, Tabs, Tab, Box, Collapse, Divider } from "@mui/material";
 import CloseIcon from '@mui/icons-material/CancelOutlined';
 import { TransitionGroup } from 'react-transition-group';
 
@@ -117,7 +117,7 @@ export function App() {
   useEffect(listen, []);
 
   let acknowledgedIncidents = _.filter(incidents, i => i.resolution == "Acknowledged" || i.resolution == "Penalized")
-  
+
   let unresolvedIncidents = incidents.filter((inc) => {
     return inc.resolution == "Unresolved";
   });
@@ -131,28 +131,32 @@ export function App() {
     <Header time={clock} />
     <Box sx={{
       display: "flex",
-      gap: 4
+      gap: 2
     }}>
-      <Stack spacing={2} sx={{ width:360 }}>
-        <Stack direction="row" alignItems="center" justifyContent="flex-start" spacing={2}>
-          <Typography variant="h4">Incident Feed</Typography>
+      <Stack spacing={2} sx={{ width: 360 }}>
+        <Box sx={{
+          display: "flex",
+          alignItems: "center",
+        }}>
+          <Typography sx={{ flexGrow: 1 }} variant="h4">Incident Feed</Typography>
           <IconButton
             title="Clear All Incidents"
             onClick={clearIncidents}>
             <CloseIcon sx={{ height: 32, width: 32 }} />
           </IconButton>
-        </Stack>
+        </Box>
         <TransitionGroup>
-        {
-          unresolvedIncidents.map((incident) => 
-          <Collapse key={incident.id}>
-            <IncidentView
-                incident={incident} />
-          </Collapse>
-          )
-        }
+          {
+            unresolvedIncidents.map((incident) =>
+              <Collapse key={incident.id}>
+                <IncidentView
+                  incident={incident} />
+              </Collapse>
+            )
+          }
         </TransitionGroup>
       </Stack>
+      <Divider orientation='vertical' flexItem />
       <Box sx={{
         flexGrow: 1,
       }}>

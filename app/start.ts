@@ -29,6 +29,7 @@ export function start() {
   const win = new BrowserWindow({
     width: 1200,
     height: 900,
+    minWidth: 960,
     webPreferences: {
       sandbox: true,
       preload: join(__dirname, 'api-bridge.js')
@@ -81,7 +82,7 @@ function startSDK(win: BrowserWindow) {
     observer.createViewFeed(pacing).subscribe(paceState => win.webContents.send('pace-state', paceState));
 
     // create a telemetry feed for just the data
-    observer.getRawTelemetryFeed().pipe(throttleTime(1000))
+    observer.getRawTelemetryFeed().pipe(throttleTime(2000))
       .subscribe(data => win.webContents.send("telemetry-json", data));
   });
 
