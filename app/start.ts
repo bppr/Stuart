@@ -3,17 +3,17 @@ import fs from 'fs';
 
 import { app, BrowserWindow, ipcMain } from 'electron'
 import iracing from 'node-irsdk-2021';
+
 import { IRSDKObserver } from './state/streams';
 import incidentCount from './state/watchers/incident-count'
-import lapCount from './state/watchers/lap-count'
 import clock from './state/views/clock';
 import offTrack from './state/watchers/offtrack';
 import pacing from './state/views/pacing';
 import drivers from './state/views/drivers';
 
+
 import './ipc-inbox';
 import { throttleTime } from 'rxjs';
-import { write } from 'original-fs';
 
 function getMainFile(): string {
   const root = join(__dirname, '..');
@@ -44,8 +44,6 @@ export function start() {
 }
 
 function startSDK(win: BrowserWindow) {
-
-
   let readFromFilePath = process.env["STUART_READ_LOG"];
   let writeToFilePath = process.env["STUART_WRITE_LOG"];
 

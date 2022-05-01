@@ -1,4 +1,4 @@
-import { ipcMain } from 'electron';
+import { BrowserWindow, ipcMain } from 'electron';
 import iracing, { SDKInstance } from 'node-irsdk-2021';
 import { focusIRacingWindow, typeMessage, sleep } from "./irobot";
 
@@ -58,5 +58,5 @@ ipcMain.handle('send-chat-message', async (ev, data: string[]) => {
   }
   
   // re-focus stuart
-  ev.sender.focus();
+  BrowserWindow.fromWebContents(ev.sender)?.focus();
 });

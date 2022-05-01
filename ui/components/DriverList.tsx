@@ -1,4 +1,4 @@
-import { DriverState } from "../../common/DriverState";
+import { CarSessionFlag, DriverState } from "../../common/DriverState";
 import { IncidentRecord } from "../types/Incident";
 import { Table, TableCell, TableRow, Paper, TableContainer, TableHead, Typography, IconButton, Avatar, Collapse, TableSortLabel, TableBody, Box, Menu, MenuItem, Backdrop, Button, FormControl, FormLabel, RadioGroup, FormControlLabel, TextField, Radio, Modal, Container, Dialog, DialogTitle, DialogActions } from "@mui/material";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
@@ -193,79 +193,13 @@ function DriverRow(props: { driver: DriverState, incidents: IncidentRecord[] }) 
     function handleMenuClick(event: React.MouseEvent<HTMLButtonElement>) {
         setMenuAnchorElement(event.currentTarget);
     }
-    function handleMenuClose() {
-        setMenuAnchorElement(null);
-    }
-    function handleGivePenalty() {
-        setShowPenaltyBackdrop(true);
-        handleMenuClose();
-    }
-
-    async function handleClearBlackFlags() {
-        const carNumber = props.driver.car.number;
-        await sendChatMessages([`!clear #${carNumber}`]);
-        handleMenuClose();
-    }
-    function handleToggleHiddenIncidents() {
-        handleMenuClose();
-        setShowDismissedIncidents((value) => !value);
-    }
 
     if (shownIncidents.length === 0 && expanded) {
         setExpanded(false);
     }
 
-    // give penalty backdrop
-    const [showPenaltyBackdrop, setShowPenaltyBackdrop] = useState(false);
-    type PenaltyDurationType = "dt" | "time";
-    const [penaltyDurationType, setPenaltyDurationType] = useState("dt" as PenaltyDurationType);
-    const [penaltyDurationTime, setPenaltyDurationTime] = useState(0);
-    const [penaltyDurationTimeError, setPenaltyDurationTimeError] = useState(false);
-    const [penaltyInProgress, setPenaltyInProgress] = useState(false);
-
-    function handleClosePenaltyBackdrop() {
-        setShowPenaltyBackdrop(false);
-    }
-    function handlePenaltyTimeChange(ev: React.ChangeEvent<HTMLInputElement>) {
-        try {
-            const time = parseInt(ev.target.value);
-            setPenaltyDurationTime(time);
-            setPenaltyDurationTimeError(false);
-        } catch (e) {
-            setPenaltyDurationTimeError(true);
-        }
-    }
-
-    async function handleIssuePenalty() {
-        const carNumber = props.driver.car.number;
-        const duration = penaltyDurationType == "dt" ? "D" : penaltyDurationTime;
-        setPenaltyInProgress(true);
-        await sendChatMessages([`!black #${carNumber} ${duration}`]);
-        setPenaltyInProgress(false);
-        handleClosePenaltyBackdrop();
-    }
-
-    // Disqualify modal
-    const [showDisqualifyModal, setShowDisqualifyModal] = useState(false);
-    const [disqualifyInProgress, setDisqualifyInProgress] = useState(false);
-
-    function handleShowDisqualify() {
-        setShowDisqualifyModal(true);
-    }
-
-    function handleCloseDisqualify() {
-        setShowDisqualifyModal(false);
-    }
-    
-    async function handleDisqualify() {
-        const carNumber = props.driver.car.number;
-        setDisqualifyInProgress(true);
-        await sendChatMessages([`!dq #${carNumber}`]);
-        setDisqualifyInProgress(false);
-        handleCloseDisqualify();
-    }
     return <React.Fragment>
-        <TableRow>
+        <TableRow sx={{ '& > *': { borderBottom: 'unset' } }}>
             <TableCell padding="checkbox">
                 <IconButton
                     size="small"
@@ -283,7 +217,7 @@ function DriverRow(props: { driver: DriverState, incidents: IncidentRecord[] }) 
                 display: "flex"
             }}>
                 <Typography sx={{ flexGrow: 1 }}>{props.driver.car.teamName}</Typography>
-                <Typography>{getFlags(props.driver)}</Typography>
+                <DriverFlags driver={props.driver} />
             </TableCell>
             <TableCell align="right">
                 <Typography>{shownIncidents.length}</Typography>
@@ -298,76 +232,18 @@ function DriverRow(props: { driver: DriverState, incidents: IncidentRecord[] }) 
                 <IconButton onClick={handleMenuClick} size="small">
                     <MoreVertIcon />
                 </IconButton>
-                <Menu
-                    id={`car-${props.driver.car.idx}-menu`}
-                    open={Boolean(menuAnchorElement)}
+                <DriverMenu
+                    driver={props.driver}
                     anchorEl={menuAnchorElement}
-                    onClose={handleMenuClose}
-                    anchorOrigin={{
-                        vertical: "top",
-                        horizontal: "left"
-                    }}
-                    transformOrigin={{
-                        vertical: "top",
-                        horizontal: "right",
-                    }}
-                >
-                    <MenuItem onClick={handleToggleHiddenIncidents}>{showDismissedIncidents ? "Hide" : "Show"} Dismissed Incidents</MenuItem>
-                    <MenuItem onClick={handleClearBlackFlags}>Clear Black Flags</MenuItem>
-                    <MenuItem onClick={handleGivePenalty}>Issue Penalty...</MenuItem>
-                    <MenuItem onClick={handleShowDisqualify}>Disqualify...</MenuItem>
-                </Menu>
-                <Dialog
-                    open={showPenaltyBackdrop}
-                    onClose={handleClosePenaltyBackdrop}
-                    >
-                        <DialogTitle>Give penalty to {props.driver.car.driverName}</DialogTitle>
-                        <Container>
-                            <RadioGroup
-                                value={penaltyDurationType}
-                                row={true}
-                                onChange={(ev) => setPenaltyDurationType(ev.target.value as PenaltyDurationType)}>
-                                <FormControlLabel value="dt" control={<Radio />} label="Drive-Through" />
-                                <FormControlLabel value="time" control={<Radio />} label={<Box>
-                                    <TextField
-                                        disabled={penaltyDurationType != "time"}
-                                        type="number"
-                                        label="Seconds"
-                                        error={penaltyDurationTimeError}
-                                        size="small"
-                                        sx={{
-                                            width:80
-                                        }}
-                                        value={penaltyDurationTime}
-                                        inputProps={{
-                                            min: 0
-                                        }}
-                                        onClick={() => setPenaltyDurationType("time")}
-                                        onChange={handlePenaltyTimeChange} />
-                                </Box>} />
-                            </RadioGroup>
-                        </Container>
-                        <DialogActions>
-                            <Button variant="outlined" onClick={handleClosePenaltyBackdrop}>Cancel</Button>
-                            <Button variant="contained" onClick={handleIssuePenalty} disabled={penaltyInProgress}>Penalize</Button>
-                        </DialogActions>
-                    </Dialog>
-                    <Dialog
-                        open={showDisqualifyModal}
-                        onClose={handleCloseDisqualify}>
-                            <DialogTitle>Disqualify {props.driver.car.driverName}?</DialogTitle>
-                            <Typography>Are you sure?</Typography>
-                            <DialogActions>
-                                <Button variant="outlined" onClick={handleCloseDisqualify}>No</Button>
-                                <Button variant="contained" onClick={handleDisqualify} disabled={disqualifyInProgress}>Yes</Button>
-                            </DialogActions>
-                    </Dialog>
-
+                    onClose={() => setMenuAnchorElement(null)}
+                    showHiddenIncidents={showDismissedIncidents}
+                    setShowHiddenIncidents={setShowDismissedIncidents}
+                />
             </TableCell>
         </TableRow>
         <TableRow>
             <TableCell colSpan={7} sx={{ paddingBottom: 0, paddingTop: 0 }}>
-                <Collapse in={expanded}>
+                <Collapse in={expanded} unmountOnExit timeout="auto">
                     <DriverDetails incidents={shownIncidents} />
                 </Collapse>
             </TableCell>
@@ -375,27 +251,174 @@ function DriverRow(props: { driver: DriverState, incidents: IncidentRecord[] }) 
     </React.Fragment>
 }
 
-function getFlags(driver: DriverState) {
-    let flagsEmoji = "";
-    driver.flags.forEach(flag => {
-        switch (flag) {
-            case "Black":
-                flagsEmoji += "🏴";
-                break;
-            case "Checkered":
-                flagsEmoji += "🏁";
-                break;
-            case "Repair":
-                flagsEmoji += "🟠";
-                break;
-            case "Disqualify": 
-                flagsEmoji += "❎"
-            default:
-                break;
-        }
-    });
+function DriverMenu(props: {
+    driver: DriverState,
+    anchorEl: Element | null,
+    onClose: () => void,
+    showHiddenIncidents: boolean,
+    setShowHiddenIncidents: (_: boolean) => void
+}) {
 
-    return flagsEmoji;
+    // give penalty backdrop
+    const [showPenaltyBackdrop, setShowPenaltyBackdrop] = useState(false);
+
+    // Disqualify modal
+    const [showDisqualifyModal, setShowDisqualifyModal] = useState(false);
+
+    function handleGivePenalty() {
+        setShowPenaltyBackdrop(true);
+        props.onClose();
+    }
+    function handleShowDisqualify() {
+        setShowDisqualifyModal(true);
+        props.onClose();
+    }
+
+    function handleToggleHiddenIncidents() {
+        props.setShowHiddenIncidents(!props.showHiddenIncidents);
+        props.onClose();
+    }
+
+
+    async function handleClearBlackFlags() {
+        const carNumber = props.driver.car.number;
+        await sendChatMessages([`!clear #${carNumber}`]);
+        props.onClose();
+    }
+
+    return <React.Fragment> <Menu
+        id={`car-${props.driver.car.idx}-menu`}
+        open={Boolean(props.anchorEl)}
+        anchorEl={props.anchorEl}
+        onClose={props.onClose}
+        anchorOrigin={{
+            vertical: "top",
+            horizontal: "left"
+        }}
+        transformOrigin={{
+            vertical: "top",
+            horizontal: "right",
+        }}
+    >
+        <MenuItem onClick={handleToggleHiddenIncidents}>{props.showHiddenIncidents ? "Hide" : "Show"} Dismissed Incidents</MenuItem>
+        <MenuItem onClick={handleClearBlackFlags}>Clear Black Flags</MenuItem>
+        <MenuItem onClick={handleGivePenalty}>Issue Penalty...</MenuItem>
+        <MenuItem onClick={handleShowDisqualify}>Disqualify...</MenuItem>
+    </Menu>
+
+        <PenaltyModal driver={props.driver} open={showPenaltyBackdrop} onClose={() => setShowPenaltyBackdrop(false)} />
+        <DisqualifyModal driver={props.driver} open={showDisqualifyModal} onClose={() => setShowDisqualifyModal(false)} />
+    </React.Fragment>
+}
+
+function PenaltyModal(props: { driver: DriverState, open: boolean, onClose: () => void }) {
+    type PenaltyDurationType = "driveThrough" | "time";
+    const [penaltyDurationType, setPenaltyDurationType] = useState("driveThrough" as PenaltyDurationType);
+    const [penaltyDurationTime, setPenaltyDurationTime] = useState(0);
+    const [penaltyDurationTimeError, setPenaltyDurationTimeError] = useState(false);
+    const [penaltyInProgress, setPenaltyInProgress] = useState(false);
+
+    function handlePenaltyTimeChange(ev: React.ChangeEvent<HTMLInputElement>) {
+        try {
+            const time = parseInt(ev.target.value);
+            setPenaltyDurationTime(time);
+            setPenaltyDurationTimeError(false);
+        } catch (e) {
+            setPenaltyDurationTimeError(true);
+        }
+    }
+
+    async function handleIssuePenalty() {
+        const carNumber = props.driver.car.number;
+        const duration = penaltyDurationType == "driveThrough" ? "D" : penaltyDurationTime;
+        setPenaltyInProgress(true);
+        await sendChatMessages([`!black #${carNumber} ${duration}`]);
+        setPenaltyInProgress(false);
+        props.onClose();
+    }
+
+    return <Dialog
+        open={props.open}
+        onClose={props.onClose}
+    >
+        <DialogTitle>Give penalty to {props.driver.car.driverName}</DialogTitle>
+        <Container>
+            <RadioGroup
+                value={penaltyDurationType}
+                row={true}
+                onChange={handlePenaltyTimeChange}>
+                <FormControlLabel
+                    value="driveThrough"
+                    control={<Radio />}
+                    label="Drive-Through"
+                    onClick={() => setPenaltyDurationType("driveThrough")} />
+                <FormControlLabel
+                    value="time"
+                    control={<Radio />}
+                    label={<Box>
+                        <TextField
+                            disabled={penaltyDurationType != "time"}
+                            type="number"
+                            label="Seconds"
+                            error={penaltyDurationTimeError}
+                            size="small"
+                            sx={{
+                                width: 80
+                            }}
+                            value={penaltyDurationTime}
+                            inputProps={{
+                                min: 0
+                            }}
+                            onClick={() => setPenaltyDurationType("time")}
+                            onChange={(ev) => setPenaltyDurationTime(parseInt(ev.target.value))} />
+                    </Box>} />
+            </RadioGroup>
+        </Container>
+        <DialogActions>
+            <Button variant="outlined" onClick={props.onClose}>Cancel</Button>
+            <Button variant="contained" onClick={handleIssuePenalty} disabled={penaltyInProgress}>Penalize</Button>
+        </DialogActions>
+    </Dialog>
+}
+
+function DisqualifyModal(props: { driver: DriverState, open: boolean, onClose: () => void }) {
+    const [disqualifyInProgress, setDisqualifyInProgress] = useState(false);
+
+    async function handleDisqualify() {
+        const carNumber = props.driver.car.number;
+        setDisqualifyInProgress(true);
+        await sendChatMessages([`!dq #${carNumber}`]);
+        setDisqualifyInProgress(false);
+        props.onClose();
+    }
+
+    return <Dialog
+        open={props.open}
+        onClose={props.onClose}>
+        <DialogTitle>Disqualify {props.driver.car.driverName}?</DialogTitle>
+        <Typography>Are you sure?</Typography>
+        <DialogActions>
+            <Button variant="outlined" onClick={props.onClose}>No</Button>
+            <Button variant="contained" onClick={handleDisqualify} disabled={disqualifyInProgress}>Yes</Button>
+        </DialogActions>
+    </Dialog>
+}
+
+type FlagElements = {
+    [key in CarSessionFlag]?: JSX.IntrinsicElements['img']
+}
+
+const FLAG_ELEMENTS_BY_NAME: FlagElements = {
+    "Black" : <img key="Black" src="./static/flag_black.png" width="24" height="24" title="Penalty" />,
+    "Repair": <img key="Repair" src="./static/flag_meatball.png" width="24" height="24" title="Repairs Needed" />,
+    "Disqualify": <img key="Disqualify" src="./static/flag_disqualify.png" width="24" height="24" title="Disqualified" />,
+    "Checkered": <img key="Checkered" src="./static/flag_checkered.png" width="24" height="24" title="Checkered" />
+}
+
+function DriverFlags(props: { driver: DriverState }): JSX.Element {
+    return <Box sx={{ display: "flex" }}>
+        {props.driver.flags.map((flag) => FLAG_ELEMENTS_BY_NAME[flag])}
+    </Box>
 }
 
 function DriverDetails(props: { incidents: IncidentRecord[] }) {
