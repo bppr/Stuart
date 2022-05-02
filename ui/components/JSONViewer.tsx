@@ -62,7 +62,7 @@ export default function JSONViewer(props: {
                 { paused ? <PlayArrow /> : <Pause /> }
             </IconButton>
         </Stack>
-        <ReactJson src={pathJson} name={false} collapsed={true} />
+        <ReactJson src={pathJson} name={false} collapsed={true} sortKeys />
     </Stack>
 
 

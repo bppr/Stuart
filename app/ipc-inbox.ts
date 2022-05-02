@@ -2,11 +2,10 @@ import { BrowserWindow, ipcMain } from 'electron';
 import iracing, { SDKInstance } from 'node-irsdk-2021';
 import { focusIRacingWindow, typeMessage, sleep } from "./irobot";
 
-
-
 type CarNumberParam = { carNumber: string };
 type JumpToTimeParam = { sessionNum: number, sessionTime: number };
 type ReplayParam = CarNumberParam & JumpToTimeParam;
+type SwitchCameraParam = CarNumberParam & { cameraGroup: number};
 
 ipcMain.on('replay', (ev, data: ReplayParam) => {
   const sdk = iracing.getInstance();
@@ -14,14 +13,19 @@ ipcMain.on('replay', (ev, data: ReplayParam) => {
   sdk.camControls.switchToCar(data.carNumber)
 });
 
-ipcMain.on('focus-camera', (ev, data: CarNumberParam) => {
+ipcMain.on('focus-camera', (ev, data: SwitchCameraParam) => {
   const sdk = iracing.getInstance();
-  sdk.camControls.switchToCar(data.carNumber);
+  sdk.camControls.switchToCar(data.carNumber, data.cameraGroup);
 });
 
 ipcMain.on('jump-to-time', (ev, data: JumpToTimeParam) => {
   const sdk = iracing.getInstance();
   sdk.playbackControls.searchTs(data.sessionNum, data.sessionTime);
+});
+
+ipcMain.on('replay-search', (ev, data: iracing.RpySrchMode) => {
+  const sdk = iracing.getInstance();
+  sdk.playbackControls.search(data)
 });
 
 ipcMain.on('replay-pause', (ev, data: any) => {
@@ -59,4 +63,22 @@ ipcMain.handle('send-chat-message', async (ev, data: string[]) => {
   
   // re-focus stuart
   BrowserWindow.fromWebContents(ev.sender)?.focus();
+});
+
+ipcMain.on('replay-speed', (ev, speed: number) => {
+  // no slow motion for now;
+  speed = speed | 0;
+  if(speed > 16) speed = 16;
+  if(speed < -16) speed = -16;
+
+  const sdk = iracing.getInstance();
+  if(speed == 0) {
+    sdk.playbackControls.pause();
+  } else if (speed == 1) {
+    sdk.playbackControls.play();
+  } else if(speed > 1) {
+    sdk.playbackControls.fastForward(speed);
+  } else if(speed <= -1) {
+    sdk.playbackControls.rewind(speed * -1);
+  }
 });

@@ -10,6 +10,7 @@ import clock from './state/views/clock';
 import offTrack from './state/watchers/offtrack';
 import pacing from './state/views/pacing';
 import drivers from './state/views/drivers';
+import camera from './state/views/camera';
 
 
 import './ipc-inbox';
@@ -78,6 +79,7 @@ function startSDK(win: BrowserWindow) {
     observer.createViewFeed(clock).subscribe(clockState => win.webContents.send('clock-update', clockState));
     observer.createViewFeed(drivers).subscribe(driverStates => win.webContents.send('drivers', driverStates));
     observer.createViewFeed(pacing).subscribe(paceState => win.webContents.send('pace-state', paceState));
+    observer.createViewFeed(camera).subscribe(cameraState => win.webContents.send('camera', cameraState));
 
     // create a telemetry feed for just the data
     observer.getRawTelemetryFeed().pipe(throttleTime(2000))

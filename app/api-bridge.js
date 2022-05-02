@@ -11,8 +11,8 @@ contextBridge.exposeInMainWorld(
     replay: (carNumber, sessionNum, sessionTime) => {
       ipcRenderer.send('replay', { carNumber, sessionNum, sessionTime })
     },
-    focusCamera: (carNumber) => {
-      ipcRenderer.send('focus-camera', { carNumber });
+    focusCamera: (carNumber, cameraGroup) => {
+      ipcRenderer.send('focus-camera', { carNumber, cameraGroup });
     },
     jumpToTime: (sessionNum, sessionTime) => {
       ipcRenderer.send('jump-to-time', { sessionNum, sessionTime });
@@ -28,6 +28,12 @@ contextBridge.exposeInMainWorld(
     },
     sendChatMessages: (msgs) => {
       return ipcRenderer.invoke('send-chat-message', msgs);
+    },
+    replaySpeed: (speed) => {
+      ipcRenderer.send('replay-speed', speed);
+    },
+    replaySearch: (searchMode) => {
+      ipcRenderer.send('replay-search', searchMode);
     }
   }
 );
