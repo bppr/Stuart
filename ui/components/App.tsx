@@ -5,7 +5,7 @@ import sdk from '../sdk';
 import IncidentView from './Incident';
 import Header from './Header';
 import Pacing from './Pacing';
-import TelemetryViewer from './JSONViewer';
+import TelemetryViewer, { SelfBoundJSONViewer } from './JSONViewer';
 
 import { Incident } from '../../common/incident';
 import { ClockState } from '../../common/ClockState';
@@ -17,7 +17,7 @@ import { Stack, Typography, IconButton, Tabs, Tab, Box, Collapse, Divider } from
 import CloseIcon from '@mui/icons-material/CancelOutlined';
 import { TransitionGroup } from 'react-transition-group';
 
-import DriverList from './DriverList';
+import DriverList, { SelfBoundDriverList } from './DriverList';
 import { DriverState } from '../../common/DriverState';
 import { CameraState } from '../../common/CameraState';
 
@@ -110,11 +110,7 @@ export function App() {
   // any time we call a setter here, getter is updated and App re-renders 
   // any child components with changed props also re-render
   const [incidents, setIncidents] = useState(INITIAL_INCIDENTS);
-  const [clock, setClock] = useState(DEFAULT_CLOCK);
-  const [telemetryJson, setTelemetryJson] = useState(DEFAULT_TELEMETRY_JSON);
-  const [paceState, setPaceState] = useState(DEFAULT_PACE_STATE);
-  const [drivers, setDrivers] = useState(DEFAULT_DRIVERS);
-  const [camera, setCamera] = useState(DEFAULT_CAMERA);
+   const [paceState, setPaceState] = useState(DEFAULT_PACE_STATE);
 
   function addIncident(incident: Incident) {
     setIncidents((prevIncidents) => {
@@ -143,11 +139,7 @@ export function App() {
 
   function listen() {
     sdk.receive('incident-data', addIncident);
-    sdk.receive('clock-update', setClock);
-    sdk.receive('telemetry-json', setTelemetryJson);
     sdk.receive('pace-state', setPaceState);
-    sdk.receive('drivers', setDrivers);
-    sdk.receive('camera', setCamera);
   }
 
   // clear all incidents, triggering a re-render
@@ -171,7 +163,7 @@ export function App() {
   }
 
   return <Box>
-    <Header camera={camera} />
+    <Header />
     <Divider />
     <Box sx={{
       display: "flex",
@@ -210,13 +202,13 @@ export function App() {
           <Tab label="Telemetry" />
         </Tabs>
         <div hidden={selectedTab !== 0}> {/* Drivers */}
-          <DriverList drivers={drivers} incidents={incidents} />
+          <SelfBoundDriverList driverChannelName="drivers" incidents={incidents} />
         </div>
         <div hidden={selectedTab !== 1}> {/* Pacing */}
           <Pacing paceOrder={paceState} />
         </div>
         <div hidden={selectedTab !== 2}> {/* Telemetry */}
-          <TelemetryViewer sourceJson={telemetryJson} />
+          <SelfBoundJSONViewer channelName="telemetry-json" />
         </div>
       </Box>
     </Box>

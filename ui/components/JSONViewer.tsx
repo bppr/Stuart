@@ -1,9 +1,10 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import ReactJson from 'react-json-view';
 import JsonPath from 'jsonpath';
 import { IconButton, Stack, TextField } from '@mui/material';
 import PlayArrow from '@mui/icons-material/PlayArrow';
 import Pause from '@mui/icons-material/Pause';
+import sdk from '../sdk';
 
 /**
  * Renders an object as json in a browseable form, with json path support
@@ -64,6 +65,14 @@ export default function JSONViewer(props: {
         </Stack>
         <ReactJson src={pathJson} name={false} collapsed={true} sortKeys />
     </Stack>
+}
 
+export function SelfBoundJSONViewer(props: {channelName: string}) {
+    const [sourceJson, setSourceJson] = useState({} as any);
 
+    useEffect(() => {
+        return sdk.receive(props.channelName, setSourceJson);
+    }, [setSourceJson, props.channelName]);
+
+    return <JSONViewer sourceJson={sourceJson} />
 }

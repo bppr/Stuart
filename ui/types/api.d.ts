@@ -1,7 +1,8 @@
 export type SearchMode = "ToStart" | "ToEnd" | "PrevSession" | "NextSession" | "PrevLap" | "NextLap" | "PrevFrame" | "NextFrame" | "PrevIncident" | "NextIncident";
 
 interface APIBridge {
-  receive(msgName: string, handler: (any) => void);
+  // returns unsubscriber function
+  receive(msgName: string, handler: (any) => void): () => void;
   replay(carNumber: string, sessionNum: number, sessionTime: number);
   focusCamera(carNumber: string, cameraGroup?: number);
   jumpToTime(sessionNum: number, sessionTime: number);
