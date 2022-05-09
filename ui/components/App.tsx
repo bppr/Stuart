@@ -172,6 +172,7 @@ export function App() {
 
   return <Box>
     <Header camera={camera} />
+    <Divider />
     <Box sx={{
       display: "flex",
       gap: 2
