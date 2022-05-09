@@ -8,6 +8,7 @@ export default function camera(state: AppState) : CameraState {
             cameraGroupNum: state.replay.cameraGroupNum,
             cameraNum: state.replay.cameraNum,
             speed: state.replay.speed,
+            isLive: (state.live.time - state.replay.time.time) < 1.5
         },
         cars: state.cars.map(toDriverCar),
         cameraGroups: state.cameraInfo.cameraGroups,

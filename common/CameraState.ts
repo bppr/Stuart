@@ -6,6 +6,8 @@ export type CameraState = {
         cameraNum: number,
         cameraGroupNum: number,
         speed: number,
+        // true if the replay camera is close enough to the live session to be considered "live"
+        isLive: boolean,
     }
     cars: DriverCar[],
     cameraGroups: {

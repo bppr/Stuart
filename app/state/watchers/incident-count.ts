@@ -16,7 +16,7 @@ const incidentCount: Watcher<AppState, Incident> = (oldState, newState) => {
     const carStates = newState.cars.map(car => [oldCarsByIdx[car.idx], car]);
 
     return carStates
-        .filter(([prev, current]) => prev && current!.teamIncidentCount > prev.teamIncidentCount)
+        .filter(([prev, current]) => prev && (current.teamIncidentCount > prev.teamIncidentCount) && (current.teamIncidentCount > 0))
         .map(([prev, current]) => {
             const inc: Incident = {
                 car: {

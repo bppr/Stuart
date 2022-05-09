@@ -5,8 +5,16 @@ const { contextBridge, ipcRenderer } = require('electron');
 contextBridge.exposeInMainWorld(
   "api", 
   {
+    // returns a function that can be used to "unsubscribe" from this event
     receive: (channel, func) => {
-      ipcRenderer.on(channel, (event, ...args) => func(...args));
+
+      function listener(event, ...args) {
+        func(...args);
+      }
+
+      ipcRenderer.on(channel, listener);
+
+      return () => { ipcRenderer.removeListener(listener);}
     },
     replay: (carNumber, sessionNum, sessionTime) => {
       ipcRenderer.send('replay', { carNumber, sessionNum, sessionTime })

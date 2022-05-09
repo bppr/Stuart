@@ -75,6 +75,7 @@ const DEFAULT_CAMERA: CameraState = {
     cameraNum: -1,
     carIdx: -1,
     speed: 0,
+    isLive: true,
   },
   sessions: [{
     lapLimit: -1,

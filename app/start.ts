@@ -64,7 +64,7 @@ function startSDK(win: BrowserWindow) {
     observer = IRSDKObserver.fromIRSDK(sdk);
   }
 
-  win.on("ready-to-show", () => {
+  win.once("ready-to-show", () => {
     // create and publish the incident feed
     let incSub = observer.getEventFeed([
       incidentCount,

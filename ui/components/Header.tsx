@@ -1,15 +1,10 @@
 import React from 'react';
-import * as sdk from '../sdk';
 
-import { formatTime } from '../clock';
+import { Typography, Box, Fab, Tooltip } from '@mui/material';
 
-import { Stack, Typography, IconButton, Box } from '@mui/material';
-import SkipNextIcon from '@mui/icons-material/SkipNext';
-import PlayArrowIcon from '@mui/icons-material/PlayArrow';
-import PauseIcon from '@mui/icons-material/Pause';
-import { ClockState } from '../../common/ClockState';
 import { CameraState } from '../../common/CameraState';
-import CameraControls from './CameraControls';
+import { Flag } from '@mui/icons-material';
+import DenseCameraControls from './DenseCameraControls';
 
 /**
  * Header shows information about the session as a whole and allows for some control over the camera and session state.
@@ -30,10 +25,28 @@ export default function Header(props: {
     camera: CameraState,
 }) {
 
-    return <Stack direction="row" alignItems="center" justifyContent="flex-start" spacing={2}>
+    return <Box sx={{
+        display: "flex",
+        justifyContent: "flex-start",
+        alignItems: "center",
+        gap: 2
+    }} >
         <Typography variant="h3">👮 Stuart</Typography>
-      
-            <CameraControls camState={props.camera} />
-       
-    </Stack>
+
+        <DenseCameraControls camState={props.camera} />
+        <Box sx={{ flexGrow: 1 }} />
+        <Tooltip title="Throw Yellow">
+            <Fab size='large' sx={{
+                ":hover": {
+                    backgroundColor: "#EEEE00"
+                },
+                backgroundColor: "#FFFF00",
+                width: "64px",
+                height: "64px",
+            }}>
+                <Flag />
+            </Fab>
+        </Tooltip>
+
+    </Box>
 }
