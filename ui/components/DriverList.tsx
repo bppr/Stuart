@@ -1,14 +1,13 @@
-import { DriverState } from "../../common/DriverState";
+import { CarSessionFlag, DriverState } from "../../common/DriverState";
 import { IncidentRecord } from "../types/Incident";
-import { Table, TableCell, TableRow, Paper, TableContainer, TableHead, Typography, IconButton, Avatar, Collapse, TableSortLabel, TableBody, Box, ButtonGroup } from "@mui/material";
-import SearchIcon from "@mui/icons-material/Search";
-import CloseIcon from "@mui/icons-material/Close";
+import { Table, TableCell, TableRow, Paper, TableContainer, TableHead, Typography, IconButton, Avatar, Collapse, TableSortLabel, TableBody, Box, Menu, MenuItem, Backdrop, Button, FormControl, FormLabel, RadioGroup, FormControlLabel, TextField, Radio, Modal, Container, Dialog, DialogTitle, DialogActions } from "@mui/material";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
-import { getIncidentEmoji } from "./Incident";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
+import Incident, { getIncidentEmoji } from "./Incident";
 import React, { useState } from "react";
 import { CircularIncidentMap } from "./CircularIncidentMap";
-import * as sdk from '../sdk';
+import { sendChatMessages } from "../sdk";
 
 
 type SortColumn = "name" | "class" | "incidents" | "position" | "class-position";
@@ -89,8 +88,29 @@ function DriverList(props: { drivers: DriverState[], incidents: IncidentRecord[]
         setSortColumn(col);
     }
 
+    const [menuAnchorElement, setMenuAnchorElement] = useState(null as null | HTMLElement);
+
+    function handleOpenMenu(event: React.MouseEvent<HTMLButtonElement>) {
+        setMenuAnchorElement(event.currentTarget);
+    }
+
+    function handleCloseMenu() {
+        setMenuAnchorElement(null);
+    }
+
+    async function handleClearAllBlackFlags() {
+        await sendChatMessages(["!clearall"]);
+        handleCloseMenu();
+    }
+
     return <TableContainer component={Paper}>
         <Table size="small">
+            <colgroup>
+                <col />
+                <col />
+                <col />
+                <col span={4} width="64px" />
+            </colgroup>
             <TableHead>
                 <TableRow>
                     <TableCell align="right" colSpan={2}>
@@ -106,18 +126,37 @@ function DriverList(props: { drivers: DriverState[], incidents: IncidentRecord[]
                     <TableCell align="right">
                         <TableSortLabel active={sortColumn === "incidents"}
                             direction={sortAscending ? 'asc' : 'desc'}
-                            onClick={() => requestSortColumn("incidents")}>Incidents</TableSortLabel>
+                            onClick={() => requestSortColumn("incidents")} title="Tallied Incidents">I</TableSortLabel>
                     </TableCell>
-                    <TableCell align="right">Flags</TableCell>
                     <TableCell align="right">
                         <TableSortLabel active={sortColumn === "class-position"}
                             direction={sortAscending ? 'asc' : 'desc'}
-                            onClick={() => requestSortColumn("class-position")}>CP</TableSortLabel>
+                            onClick={() => requestSortColumn("class-position")} title="Position in Class">C</TableSortLabel>
                     </TableCell>
                     <TableCell align="right">
                         <TableSortLabel active={sortColumn === "position"}
                             direction={sortAscending ? 'asc' : 'desc'}
-                            onClick={() => requestSortColumn("position")}>OP</TableSortLabel>
+                            onClick={() => requestSortColumn("position")} title="Position Overall">R</TableSortLabel>
+                    </TableCell>
+                    <TableCell padding="checkbox">
+                        <IconButton onClick={handleOpenMenu} size="small">
+                            <MoreVertIcon />
+                        </IconButton>
+                        <Menu
+                            open={Boolean(menuAnchorElement)}
+                            anchorEl={menuAnchorElement}
+                            onClose={handleCloseMenu}
+                            anchorOrigin={{
+                                vertical: "top",
+                                horizontal: "left"
+                            }}
+                            transformOrigin={{
+                                vertical: "top",
+                                horizontal: "right",
+                            }}
+                        >
+                            <MenuItem onClick={handleClearAllBlackFlags}>Clear All Black Flags</MenuItem>
+                        </Menu>
                     </TableCell>
                 </TableRow>
             </TableHead>
@@ -141,15 +180,26 @@ function DriverList(props: { drivers: DriverState[], incidents: IncidentRecord[]
  */
 function DriverRow(props: { driver: DriverState, incidents: IncidentRecord[] }) {
     const [expanded, setExpanded] = useState(false);
-    const [hoveredIncident, setHoveredIncident] = useState(-1);
-    const shownIncidents = props.incidents.filter(inc => inc.resolution === "Acknowledged");
+    const [showDismissedIncidents, setShowDismissedIncidents] = useState(false);
 
-        if(shownIncidents.length === 0 && expanded) {
-            setExpanded(false);
-        }
+    const shownIncidents = props.incidents.filter(inc => (
+        inc.resolution === "Acknowledged" ||
+        inc.resolution === "Penalized" ||
+        (showDismissedIncidents && inc.resolution === "Dismissed")
+    ));
+
+    // driver options menu
+    const [menuAnchorElement, setMenuAnchorElement] = useState(null as (null | HTMLElement));
+    function handleMenuClick(event: React.MouseEvent<HTMLButtonElement>) {
+        setMenuAnchorElement(event.currentTarget);
+    }
+
+    if (shownIncidents.length === 0 && expanded) {
+        setExpanded(false);
+    }
 
     return <React.Fragment>
-        <TableRow>
+        <TableRow sx={{ '& > *': { borderBottom: 'unset' } }}>
             <TableCell padding="checkbox">
                 <IconButton
                     size="small"
@@ -163,115 +213,277 @@ function DriverRow(props: { driver: DriverState, incidents: IncidentRecord[] }) 
                     {props.driver.car.number}
                 </Avatar>
             </TableCell>
-            <TableCell>
-                <Typography>{props.driver.car.teamName}</Typography>
+            <TableCell sx={{
+                display: "flex"
+            }}>
+                <Typography sx={{ flexGrow: 1 }}>{props.driver.car.teamName}</Typography>
+                <DriverFlags driver={props.driver} />
             </TableCell>
             <TableCell align="right">
                 <Typography>{shownIncidents.length}</Typography>
             </TableCell>
             <TableCell align="right">
-                <Typography>{getFlags(props.driver)}</Typography>
-            </TableCell>
-            <TableCell align="right">
                 <Typography>{props.driver.classPosition}</Typography>
             </TableCell>
-            <TableCell align="right">
+            <TableCell align="right" >
                 <Typography>{props.driver.position}</Typography>
+            </TableCell>
+            <TableCell padding="checkbox">
+                <IconButton onClick={handleMenuClick} size="small">
+                    <MoreVertIcon />
+                </IconButton>
+                <DriverMenu
+                    driver={props.driver}
+                    anchorEl={menuAnchorElement}
+                    onClose={() => setMenuAnchorElement(null)}
+                    showHiddenIncidents={showDismissedIncidents}
+                    setShowHiddenIncidents={setShowDismissedIncidents}
+                />
             </TableCell>
         </TableRow>
         <TableRow>
             <TableCell colSpan={7} sx={{ paddingBottom: 0, paddingTop: 0 }}>
-                <Collapse in={expanded}>
-                    <Box sx={{
-                        display: "flex"
-                    }}>
-                        <CircularIncidentMap size={360}
-                            icons={
-                                shownIncidents.map(inc => {
-                                    return {
-                                        emoji: getIncidentEmoji(inc),
-                                        trackPositionPct: inc.data.trackPositionPct,
-                                        highlighted: hoveredIncident === inc.id,
-                                        incidentId: inc.id,
-                                    };
-                                })
-                            } />
-                        <Box sx={{
-                            flexGrow: 1,
-                            display: "flex",
-                            flexDirection: "column",
-                        }}>
-                            {
-                                shownIncidents.map(incident => <IncidentListItem 
-                                    key={"driver-incident-" + incident.id} 
-                                    incident={incident} 
-                                    hovered={(over: boolean) => {
-                                        setHoveredIncident((oldId) => {
-                                            if(over) {
-                                                return incident.id;
-                                            } else {
-                                                if(oldId === incident.id) {
-                                                    return -1;
-                                                } else {
-                                                    return oldId;
-                                                }
-                                            }
-                                        })  
-                                    }}/>)
-                            }
-                        </Box>
-                    </Box>
+                <Collapse in={expanded} unmountOnExit timeout="auto">
+                    <DriverDetails incidents={shownIncidents} />
                 </Collapse>
             </TableCell>
         </TableRow>
     </React.Fragment>
 }
 
-function getFlags(driver: DriverState) {
-    let flagsEmoji = "";
-    driver.flags.forEach(flag => {
-        switch (flag) {
-            case "Black":
-                flagsEmoji += "🏴";
-                break;
-            case "Checkered":
-                flagsEmoji += "🏁";
-                break;
-            case "Repair":
-                flagsEmoji += "🟠";
-                break;
-            default:
-                break;
-        }
-    });
+function DriverMenu(props: {
+    driver: DriverState,
+    anchorEl: Element | null,
+    onClose: () => void,
+    showHiddenIncidents: boolean,
+    setShowHiddenIncidents: (_: boolean) => void
+}) {
 
-    return flagsEmoji;
+    // give penalty backdrop
+    const [showPenaltyBackdrop, setShowPenaltyBackdrop] = useState(false);
+
+    // Disqualify modal
+    const [showDisqualifyModal, setShowDisqualifyModal] = useState(false);
+
+    function handleGivePenalty() {
+        setShowPenaltyBackdrop(true);
+        props.onClose();
+    }
+    function handleShowDisqualify() {
+        setShowDisqualifyModal(true);
+        props.onClose();
+    }
+
+    function handleToggleHiddenIncidents() {
+        props.setShowHiddenIncidents(!props.showHiddenIncidents);
+        props.onClose();
+    }
+
+
+    async function handleClearBlackFlags() {
+        const carNumber = props.driver.car.number;
+        await sendChatMessages([`!clear #${carNumber}`]);
+        props.onClose();
+    }
+
+    return <React.Fragment> <Menu
+        id={`car-${props.driver.car.idx}-menu`}
+        open={Boolean(props.anchorEl)}
+        anchorEl={props.anchorEl}
+        onClose={props.onClose}
+        anchorOrigin={{
+            vertical: "top",
+            horizontal: "left"
+        }}
+        transformOrigin={{
+            vertical: "top",
+            horizontal: "right",
+        }}
+    >
+        <MenuItem onClick={handleToggleHiddenIncidents}>{props.showHiddenIncidents ? "Hide" : "Show"} Dismissed Incidents</MenuItem>
+        <MenuItem onClick={handleClearBlackFlags}>Clear Black Flags</MenuItem>
+        <MenuItem onClick={handleGivePenalty}>Issue Penalty...</MenuItem>
+        <MenuItem onClick={handleShowDisqualify}>Disqualify...</MenuItem>
+    </Menu>
+
+        <PenaltyModal driver={props.driver} open={showPenaltyBackdrop} onClose={() => setShowPenaltyBackdrop(false)} />
+        <DisqualifyModal driver={props.driver} open={showDisqualifyModal} onClose={() => setShowDisqualifyModal(false)} />
+    </React.Fragment>
+}
+
+function PenaltyModal(props: { driver: DriverState, open: boolean, onClose: () => void }) {
+    type PenaltyDurationType = "driveThrough" | "time";
+    const [penaltyDurationType, setPenaltyDurationType] = useState("driveThrough" as PenaltyDurationType);
+    const [penaltyDurationTime, setPenaltyDurationTime] = useState(0);
+    const [penaltyDurationTimeError, setPenaltyDurationTimeError] = useState(false);
+    const [penaltyInProgress, setPenaltyInProgress] = useState(false);
+
+    function handlePenaltyTimeChange(ev: React.ChangeEvent<HTMLInputElement>) {
+        try {
+            const time = parseInt(ev.target.value);
+            setPenaltyDurationTime(time);
+            setPenaltyDurationTimeError(false);
+        } catch (e) {
+            setPenaltyDurationTimeError(true);
+        }
+    }
+
+    async function handleIssuePenalty() {
+        const carNumber = props.driver.car.number;
+        const duration = penaltyDurationType == "driveThrough" ? "D" : penaltyDurationTime;
+        setPenaltyInProgress(true);
+        await sendChatMessages([`!black #${carNumber} ${duration}`]);
+        setPenaltyInProgress(false);
+        props.onClose();
+    }
+
+    return <Dialog
+        open={props.open}
+        onClose={props.onClose}
+    >
+        <DialogTitle>Give penalty to {props.driver.car.driverName}</DialogTitle>
+        <Container>
+            <RadioGroup
+                value={penaltyDurationType}
+                row={true}
+                onChange={handlePenaltyTimeChange}>
+                <FormControlLabel
+                    value="driveThrough"
+                    control={<Radio />}
+                    label="Drive-Through"
+                    onClick={() => setPenaltyDurationType("driveThrough")} />
+                <FormControlLabel
+                    value="time"
+                    control={<Radio />}
+                    label={<Box>
+                        <TextField
+                            disabled={penaltyDurationType != "time"}
+                            type="number"
+                            label="Seconds"
+                            error={penaltyDurationTimeError}
+                            size="small"
+                            sx={{
+                                width: 80
+                            }}
+                            value={penaltyDurationTime}
+                            inputProps={{
+                                min: 0
+                            }}
+                            onClick={() => setPenaltyDurationType("time")}
+                            onChange={(ev) => setPenaltyDurationTime(parseInt(ev.target.value))} />
+                    </Box>} />
+            </RadioGroup>
+        </Container>
+        <DialogActions>
+            <Button variant="outlined" onClick={props.onClose}>Cancel</Button>
+            <Button variant="contained" onClick={handleIssuePenalty} disabled={penaltyInProgress}>Penalize</Button>
+        </DialogActions>
+    </Dialog>
+}
+
+function DisqualifyModal(props: { driver: DriverState, open: boolean, onClose: () => void }) {
+    const [disqualifyInProgress, setDisqualifyInProgress] = useState(false);
+
+    async function handleDisqualify() {
+        const carNumber = props.driver.car.number;
+        setDisqualifyInProgress(true);
+        await sendChatMessages([`!dq #${carNumber}`]);
+        setDisqualifyInProgress(false);
+        props.onClose();
+    }
+
+    return <Dialog
+        open={props.open}
+        onClose={props.onClose}>
+        <DialogTitle>Disqualify {props.driver.car.driverName}?</DialogTitle>
+        <Typography>Are you sure?</Typography>
+        <DialogActions>
+            <Button variant="outlined" onClick={props.onClose}>No</Button>
+            <Button variant="contained" onClick={handleDisqualify} disabled={disqualifyInProgress}>Yes</Button>
+        </DialogActions>
+    </Dialog>
+}
+
+type FlagElements = {
+    [key in CarSessionFlag]?: JSX.IntrinsicElements['img']
+}
+
+const FLAG_ELEMENTS_BY_NAME: FlagElements = {
+    "Black" : <img key="Black" src="./static/flag_black.png" width="24" height="24" title="Penalty" />,
+    "Repair": <img key="Repair" src="./static/flag_meatball.png" width="24" height="24" title="Repairs Needed" />,
+    "Disqualify": <img key="Disqualify" src="./static/flag_disqualify.png" width="24" height="24" title="Disqualified" />,
+    "Checkered": <img key="Checkered" src="./static/flag_checkered.png" width="24" height="24" title="Checkered" />
+}
+
+function DriverFlags(props: { driver: DriverState }): JSX.Element {
+    return <Box sx={{ display: "flex" }}>
+        {props.driver.flags.map((flag) => FLAG_ELEMENTS_BY_NAME[flag])}
+    </Box>
+}
+
+function DriverDetails(props: { incidents: IncidentRecord[] }) {
+    const [hoveredIncident, setHoveredIncident] = useState(-1);
+
+    return <Box sx={{
+        display: "flex"
+    }}>
+        <CircularIncidentMap size={200}
+            icons={
+                props.incidents.map(inc => {
+                    return {
+                        emoji: getIncidentEmoji(inc),
+                        trackPositionPct: inc.data.trackPositionPct,
+                        highlighted: hoveredIncident === inc.id,
+                        incidentId: inc.id,
+                    };
+                })
+            } />
+        <Box sx={{
+            flexGrow: 1,
+            display: "flex",
+            flexDirection: "column",
+        }}>
+            <Typography>Incidents:</Typography>
+            {
+                props.incidents.map(incident => <IncidentListItem
+                    key={"driver-incident-" + incident.id}
+                    incident={incident}
+                    hovered={(over: boolean) => {
+                        setHoveredIncident((oldId) => {
+                            if (over) {
+                                return incident.id;
+                            } else {
+                                if (oldId === incident.id) {
+                                    return -1;
+                                } else {
+                                    return oldId;
+                                }
+                            }
+                        })
+                    }} />)
+            }
+        </Box>
+        <Box sx={{
+            flexGrow: 1,
+            display: "flex",
+            flexDirection: "column",
+        }}>
+            <Typography>Penalties:</Typography>
+
+        </Box>
+    </Box>
 }
 
 function IncidentListItem(props: { incident: IncidentRecord, hovered?: (over: boolean) => void }) {
 
-    const hover = props.hovered ?? ((over: boolean) => {});
+    const hover = props.hovered ?? ((over: boolean) => { });
 
     const incident = props.incident;
     return <Box sx={{
         display: "flex",
         alignItems: "center"
     }} onMouseOver={() => hover(true)} onMouseOut={() => hover(false)}>
-        <Avatar sx={{
-            width: 24,
-            height: 24,
-            fontSize: 12
-        }}>{getIncidentEmoji(props.incident)}</Avatar>
-        <Typography sx={{ width: 80 }}>Lap {incident.data.lap}</Typography>
-        <Typography sx={{ flexGrow: 1 }}>{incident.data.type}</Typography>
-        <ButtonGroup size="small">
-            <IconButton onClick={() => sdk.replay(props.incident.data)} >
-                <SearchIcon />
-            </IconButton>
-            <IconButton onClick={() => props.incident.resolve("Unresolved")}>
-                <CloseIcon />
-            </IconButton>
-        </ButtonGroup>
+        <Incident incident={incident} compact />
     </Box>
 }
 

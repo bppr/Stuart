@@ -3,10 +3,11 @@ import React from 'react';
 import * as sdk from '../sdk';
 import { IncidentRecord } from "../types/Incident";
 
-import { Card, CardHeader, ButtonGroup, Avatar, IconButton, Paper, Box, Typography } from '@mui/material';
-import SearchIcon from '@mui/icons-material/Search';
+import { Avatar, IconButton, Paper, Box, Typography } from '@mui/material';
+import VideocamIcon from '@mui/icons-material/Videocam';
 import ClearIcon from '@mui/icons-material/Clear';
-import CheckIcon from '@mui/icons-material/Check'
+import CheckIcon from '@mui/icons-material/Check';
+import UndoIcon from '@mui/icons-material/Undo';
 
 import { formatTime } from '../clock';
 
@@ -14,6 +15,7 @@ import { formatTime } from '../clock';
 // prop: incident, a record for an incident including its resolution state
 export function FlexBoxIncident(props: {
   incident: IncidentRecord,
+  compact?: boolean,
 }) {
 
   const incident = props.incident;
@@ -35,6 +37,9 @@ export function FlexBoxIncident(props: {
     incident.resolve("Dismissed");
   }
 
+  const unresolveIncident = () => {
+    incident.resolve("Unresolved");
+  }
 
   return <Paper
     sx={{
@@ -44,9 +49,12 @@ export function FlexBoxIncident(props: {
       margin: "4px",
       display: "flex",
       alignItems: "center",
-      gap:1,
-    }}>
-    <Avatar>{getIncidentEmoji(incident)}</Avatar>
+      gap: 1,
+    }} >
+    <Avatar sx={{
+      width: props.compact ? "24px" : "48px",
+      height: props.compact ? "24px" : "48px",
+    }}>{getIncidentEmoji(incident)}</Avatar>
     <Box sx={{
       display: "flex",
       flexDirection: "column",
@@ -54,27 +62,40 @@ export function FlexBoxIncident(props: {
       minWidth: 0,
     }}
     >
-      <Box sx={{ 
+      {!props.compact && 
+      <Box sx={{
         display: "flex",
-        alignItems: "center", 
+        alignItems: "center",
         gap: 1,
-        }}>
+      }}>
         <Avatar sx={{ width: 24, height: 24, fontSize: 12, bgcolor: car.class.color, color: "black" }} variant="rounded">
           {car.number}
         </Avatar>
-        <Typography noWrap variant="subtitle1" sx={{flexGrow:1}}>{car.driverName}</Typography>
-      </Box>
+        <Typography noWrap variant="subtitle1" sx={{ flexGrow: 1 }}>{car.driverName}</Typography>
+      </Box>}
       <Typography noWrap variant="caption">{[props.incident.data.type, '/', formatTime(props.incident.data.time.time)].join(' ')}</Typography>
     </Box>
-    <IconButton onClick={showReplay} title="Show in Replay">
-      <SearchIcon />
-    </IconButton>
-    <IconButton onClick={acknowledgeIncident} title="Acknowledge">
-      <CheckIcon />
-    </IconButton>
-    <IconButton onClick={dismissIncident} title="Dismiss">
-      <ClearIcon />
-    </IconButton>
+    <Box sx={{
+      display: "flex",
+      flexWrap: "nowrap"
+    }}>
+      <IconButton size="small" onClick={showReplay} title="Show in Replay">
+        <VideocamIcon />
+      </IconButton>
+      {incident.resolution == "Unresolved" &&
+      <React.Fragment>
+        <IconButton size="small" onClick={acknowledgeIncident} title="Acknowledge">
+          <CheckIcon />
+        </IconButton>
+        <IconButton size="small" onClick={dismissIncident} title="Dismiss">
+          <ClearIcon />
+        </IconButton>
+      </React.Fragment>}
+      {incident.resolution != "Unresolved" &&
+        <IconButton size="small" onClick={unresolveIncident} title="Un-resolve">
+          <UndoIcon />
+        </IconButton>}
+    </Box>
   </Paper>
 }
 

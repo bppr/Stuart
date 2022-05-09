@@ -3,17 +3,17 @@ import fs from 'fs';
 
 import { app, BrowserWindow, ipcMain } from 'electron'
 import iracing from 'node-irsdk-2021';
+
 import { IRSDKObserver } from './state/streams';
 import incidentCount from './state/watchers/incident-count'
-import lapCount from './state/watchers/lap-count'
 import clock from './state/views/clock';
 import offTrack from './state/watchers/offtrack';
 import pacing from './state/views/pacing';
 import drivers from './state/views/drivers';
 
+
 import './ipc-inbox';
 import { throttleTime } from 'rxjs';
-import { write } from 'original-fs';
 
 function getMainFile(): string {
   const root = join(__dirname, '..');
@@ -29,6 +29,7 @@ export function start() {
   const win = new BrowserWindow({
     width: 1200,
     height: 900,
+    minWidth: 960,
     webPreferences: {
       sandbox: true,
       preload: join(__dirname, 'api-bridge.js')
@@ -43,8 +44,6 @@ export function start() {
 }
 
 function startSDK(win: BrowserWindow) {
-
-
   let readFromFilePath = process.env["STUART_READ_LOG"];
   let writeToFilePath = process.env["STUART_WRITE_LOG"];
 
@@ -81,7 +80,7 @@ function startSDK(win: BrowserWindow) {
     observer.createViewFeed(pacing).subscribe(paceState => win.webContents.send('pace-state', paceState));
 
     // create a telemetry feed for just the data
-    observer.getRawTelemetryFeed().pipe(throttleTime(1000))
+    observer.getRawTelemetryFeed().pipe(throttleTime(2000))
       .subscribe(data => win.webContents.send("telemetry-json", data));
   });
 

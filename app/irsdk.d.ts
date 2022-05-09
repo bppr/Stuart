@@ -1,6 +1,6 @@
 declare module 'node-irsdk-2021' {
   export type SessionFlag = "StartHidden" | "StartGo" | "StartReady" | "OneLapToGreen" | "Caution" | "CautionWaving";
-  export type CarSessionFlag = "Servicible" | "Black" | "Repair";
+  export type CarSessionFlag = "Servicible" | "Black" | "Repair" | "Disqualify";
   export type SessionState = "GetInCar" | "ParadeLaps" | "Racing" | "CoolDown" ;
   export type SessionType = "Race" | "Qualifying" | "Practice" ;
   export type TrackSurface = "OnTrack" | "OffTrack" | "NotInWorld" | "AproachingPits" | "InPitStall" ; // sic: "AproachingPits" is spelled wrong in the telemetry data

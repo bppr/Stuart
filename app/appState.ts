@@ -4,7 +4,7 @@ import _ from 'lodash';
 import iracing from 'node-irsdk-2021';
 import { HexColor, CarColors } from '../common/util'
 
-export type CarSessionFlag = "Servicible" | "Black" | "Repair"
+export type CarSessionFlag = "Servicible" | "Black" | "Repair" | "Disqualify"
 export type TrackSurface ="OnTrack" | "OffTrack" | "NotInWorld" | "AproachingPits" | "InPitStall" ; // sic: "AproachingPits" is spelled wrong in the telemetry data
 export type SessionFlag = "StartHidden" | "StartGo" | "StartReady" | "OneLapToGreen" | "Caution" | "CautionWaving";
 /**

@@ -1,6 +1,6 @@
 import { CarColors, HexColor } from "./util";
 
-export type CarSessionFlag = "Servicible" | "Black" | "Repair" | "Checkered";
+export type CarSessionFlag = "Servicible" | "Black" | "Repair" | "Checkered" | "Disqualify";
 
 /**
  * Information about a driver and car that changes only rarely
