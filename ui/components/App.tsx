@@ -19,6 +19,7 @@ import { TransitionGroup } from 'react-transition-group';
 
 import DriverList from './DriverList';
 import { DriverState } from '../../common/DriverState';
+import { CameraState } from '../../common/CameraState';
 
 
 const INITIAL_INCIDENTS: IncidentRecord[] = [];
@@ -45,6 +46,46 @@ const DEFAULT_PACE_STATE: PaceState = {
   oneToGo: false,
 }
 const DEFAULT_DRIVERS: DriverState[] = [];
+const DEFAULT_CAMERA: CameraState = {
+  cameraGroups: [{
+    cameras: [{
+      name: "NONE",
+      num: -1,
+    }],
+    name: "NONE",
+    num: -1
+  }],
+  cars: [{
+    class: {
+      color: "#FFFFFF",
+      name: "NONE",
+    },
+    color: {
+      primary: "#000000",
+      secondary: "#000000",
+      tertiary: "#000000",
+    },
+    driverName: "NONE",
+    idx: -1,
+    number: "---",
+    teamName: "NONE"
+  }],
+  current: {
+    cameraGroupNum: -1,
+    cameraNum: -1,
+    carIdx: -1,
+    speed: 0,
+    isLive: true,
+  },
+  sessions: [{
+    lapLimit: -1,
+    name: "NONE",
+    num: 0,
+    timeLimt: -1,
+    type: "NONE"
+  }],
+}
+
 
 function formatTime(seconds: number) {
   seconds = Math.round(seconds);
@@ -73,6 +114,7 @@ export function App() {
   const [telemetryJson, setTelemetryJson] = useState(DEFAULT_TELEMETRY_JSON);
   const [paceState, setPaceState] = useState(DEFAULT_PACE_STATE);
   const [drivers, setDrivers] = useState(DEFAULT_DRIVERS);
+  const [camera, setCamera] = useState(DEFAULT_CAMERA);
 
   function addIncident(incident: Incident) {
     setIncidents((prevIncidents) => {
@@ -105,6 +147,7 @@ export function App() {
     sdk.receive('telemetry-json', setTelemetryJson);
     sdk.receive('pace-state', setPaceState);
     sdk.receive('drivers', setDrivers);
+    sdk.receive('camera', setCamera);
   }
 
   // clear all incidents, triggering a re-render
@@ -128,7 +171,8 @@ export function App() {
   }
 
   return <Box>
-    <Header time={clock} />
+    <Header camera={camera} />
+    <Divider />
     <Box sx={{
       display: "flex",
       gap: 2

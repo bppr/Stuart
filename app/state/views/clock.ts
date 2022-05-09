@@ -7,7 +7,7 @@ import { ClockState } from "../../../common/ClockState";
  * Clock is a view of the AppState that is concerned with the current timing information for the live session and the 
  */
 const clock: View<AppState, ClockState> = (state) => {
-    const cCar = state.findCarByIdx(state.camera.carIdx);
+    const cCar = state.findCarByIdx(state.replay.carIdx);
 
     return {
         live: {
@@ -15,10 +15,10 @@ const clock: View<AppState, ClockState> = (state) => {
             time: state.live.time,
         },
         replay: {
-            num: state.camera.time.session,
-            time: state.camera.time.time,
+            num: state.replay.time.session,
+            time: state.replay.time.time,
         },
-        camSpeed: state.camera.speed,
+        camSpeed: state.replay.speed,
         camCar: {
             index: cCar?.idx || -1,
             number: cCar?.number || "---",

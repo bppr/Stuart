@@ -25,7 +25,6 @@ import { DriverState } from "../../../common/DriverState";
 const getDriverState: View<AppState, DriverState[]> = (state) => {
     return state.cars.filter(car => !car.isPaceCar)
         .map(car => {
-
             const ds: DriverState = {
                 car: toDriverCar(car),
                 classPosition: car.officialClassPosition,

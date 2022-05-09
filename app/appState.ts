@@ -57,10 +57,12 @@ export type AppState = {
    */
   live: TimeStamp,
   sessionFlags: SessionFlag[],
-  camera: {
+  replay: {
     carIdx: number,
     speed: number,
     time: TimeStamp,
+    cameraGroupNum: number,
+    cameraNum: number,
   },
   weekend: {
     /** A human-readable display name for the current track */
@@ -72,9 +74,24 @@ export type AppState = {
     /** e.g., '0.9 mi' or '1.7 km' */
     trackDisplayLength: string,
   },
+  cameraInfo: {
+    cameraGroups: {
+      num: number,
+      name: string,
+      cameras: {
+        num: number,
+        name: string,
+      }[]
+    }[]
+  },
   cars: CarState[],
   findCarByIdx: (_:number) => CarState | undefined,
   findCarByNumber: (_:string) => CarState | undefined,
+  sessions: {
+    num: number,
+    name: string,
+    type: string,
+  }[],
 }
 
 export type CarState = {
@@ -190,13 +207,15 @@ export function toAppState(session: iracing.SessionData, telemetry: iracing.Tele
 
   return {
     cars: [...cars.values()],
-    camera: {
+    replay: {
       carIdx: telemetry.values.CamCarIdx,
       time: {
         session: telemetry.values.ReplaySessionNum,
         time: telemetry.values.ReplaySessionTime,
       },
       speed: telemetry.values.ReplayPlaySpeed,
+      cameraGroupNum: telemetry.values.CamGroupNumber,
+      cameraNum: telemetry.values.CamCameraNumber,
     },
     live: {
       session: telemetry.values.SessionNum,
@@ -208,8 +227,26 @@ export function toAppState(session: iracing.SessionData, telemetry: iracing.Tele
       trackId: session.data.WeekendInfo.TrackConfigName,
       trackName: session.data.WeekendInfo.TrackDisplayName,
     },
+    cameraInfo: {
+      cameraGroups: session.data.CameraInfo.Groups.map((group) => {
+        return {
+          name: group.GroupName,
+          num: group.GroupNum,
+          cameras: group.Cameras.map((cam) => {
+            return {
+              name: cam.CameraName,
+              num: cam.CameraNum,
+            };
+          })
+        };
+      }),
+    },
     sessionFlags: telemetry.values.SessionFlags,
-
+    sessions: sessions.map(session => ({
+      name: session.SessionName,
+      num: session.SessionNum,
+      type: session.SessionType,
+    })),
     findCarByIdx: (idx: number) => cars.get(idx),
     findCarByNumber: createLookupFunction([...cars.values()], (car) => car.number),
   };
