@@ -1,7 +1,7 @@
 {
   "exclude": ["build"],
   "ts-node": { "files": true },
-  "files": ["index.ts", "./app/irsdk.d.ts"],
+  "files": ["index.ts", "app/irsdk.d.ts", "app/sendkeys.d.ts"],
   "compilerOptions": {
     "target": "es2016",
     "outDir": "./build",

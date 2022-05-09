@@ -1,40 +1,52 @@
 import React from 'react';
-import { ReplayTime } from '../../common/index'
-import * as sdk from '../sdk';
 
-import { formatTime } from '../clock';
+import { Typography, Box, Fab, Tooltip } from '@mui/material';
 
-import { Stack, Typography, IconButton } from '@mui/material';
-import SkipNextIcon from '@mui/icons-material/SkipNext';
-import PlayArrowIcon from '@mui/icons-material/PlayArrow';
-import PauseIcon from '@mui/icons-material/Pause';
+import { CameraState } from '../../common/CameraState';
+import { Flag } from '@mui/icons-material';
+import DenseCameraControls from './DenseCameraControls';
 
+/**
+ * Header shows information about the session as a whole and allows for some control over the camera and session state.
+ * 
+ * Features: (not all implemented yet)
+ * - Session state including
+ *   - elapsed time
+ *   - session type (practice, qualifying, warm up, race, etc)
+ *   - status (gridding, starting, racing, caution, finished, etc.)
+ *   - flags (green, caution, etc. Probably considered part of "status")
+ * - Replay camera controls
+ *   - play/pause
+ *   - jump to live
+ *   - current camera time
+ *   - currently viewed driver
+ */
 export default function Header(props: {
-    time: ReplayTime
+    camera: CameraState,
 }) {
 
-    const togglePlayPause = () => {
-        if (props.time.camPaused) {
-            sdk.playReplay();
-        } else {
-            sdk.pauseReplay();
-        }
-    };
-
-    return <Stack direction="row" alignItems="center" justifyContent="flex-start" spacing={2}>
+    return <Box sx={{
+        display: "flex",
+        justifyContent: "flex-start",
+        alignItems: "center",
+        gap: 2
+    }} >
         <Typography variant="h3">👮 Stuart</Typography>
-        <IconButton title={props.time.camPaused ? "Unpause Replay" : "Pause Replay"} sx={{ width: 64, height: 64 }}
-            onClick={togglePlayPause} >
-            {props.time.camPaused ? <PlayArrowIcon /> : <PauseIcon />}
-        </IconButton>
-        <IconButton title="Jump to Live" sx={{ width: 64, height: 64 }}
-            onClick={sdk.liveReplay}>
-            <SkipNextIcon />
-        </IconButton>
-        <Stack sx={{ width: 300 }} spacing={0}>
-            <Typography variant="h5">Live: S{props.time.liveSessionNum} {formatTime(props.time.liveSessionTime)}</Typography>
-            <Typography variant="h6">Replay: S{props.time.camSessionNum} {formatTime(props.time.camSessionTime)}</Typography>
-            <Typography variant="subtitle1">Driver: #{props.time.camCarNumber} {props.time.camDriverName}</Typography>
-        </Stack>
-    </Stack>
+
+        <DenseCameraControls camState={props.camera} />
+        <Box sx={{ flexGrow: 1 }} />
+        <Tooltip title="Throw Yellow">
+            <Fab size='large' sx={{
+                ":hover": {
+                    backgroundColor: "#EEEE00"
+                },
+                backgroundColor: "#FFFF00",
+                width: "64px",
+                height: "64px",
+            }}>
+                <Flag />
+            </Fab>
+        </Tooltip>
+
+    </Box>
 }

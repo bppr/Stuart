@@ -1,21 +1,11 @@
-import { ipcMain } from 'electron';
-import iracing from 'node-irsdk-2021';
-import { Resolution } from "../common/incident";
-import Application from "./application";
+import { BrowserWindow, ipcMain } from 'electron';
+import iracing, { SDKInstance } from 'node-irsdk-2021';
+import { focusIRacingWindow, typeMessage, sleep } from "./irobot";
 
 type CarNumberParam = { carNumber: string };
 type JumpToTimeParam = { sessionNum: number, sessionTime: number };
 type ReplayParam = CarNumberParam & JumpToTimeParam;
-
-type IncidentResolvedParam = {
-  incidentId: number,
-  resolution: Resolution
-};
-
-ipcMain.on('connect-window', (ev, data: any) => {
-  console.log('connected to renderer');
-  Application.getInstance().addOutbox(ev.sender);
-});
+type SwitchCameraParam = CarNumberParam & { cameraGroup: number};
 
 ipcMain.on('replay', (ev, data: ReplayParam) => {
   const sdk = iracing.getInstance();
@@ -23,9 +13,9 @@ ipcMain.on('replay', (ev, data: ReplayParam) => {
   sdk.camControls.switchToCar(data.carNumber)
 });
 
-ipcMain.on('focus-camera', (ev, data: CarNumberParam) => {
+ipcMain.on('focus-camera', (ev, data: SwitchCameraParam) => {
   const sdk = iracing.getInstance();
-  sdk.camControls.switchToCar(data.carNumber);
+  sdk.camControls.switchToCar(data.carNumber, data.cameraGroup);
 });
 
 ipcMain.on('jump-to-time', (ev, data: JumpToTimeParam) => {
@@ -33,26 +23,9 @@ ipcMain.on('jump-to-time', (ev, data: JumpToTimeParam) => {
   sdk.playbackControls.searchTs(data.sessionNum, data.sessionTime);
 });
 
-ipcMain.on('acknowledge-incident', (ev, data: IncidentResolvedParam) => {
-  console.log("INBOX: " + 'acknowledge-incident ' + data.incidentId);
-  Application.getInstance().incidents.resolve(data.incidentId, 'Acknowledged');
-});
-
-ipcMain.on('dismiss-incident', (ev, data: IncidentResolvedParam) => {
-  console.log("INBOX: " + 'dismiss-incident ' + data.incidentId);
-  Application.getInstance().incidents.resolve(data.incidentId, 'Dismissed');
-});
-
-ipcMain.on('unresolve-incident', (ev, data: IncidentResolvedParam) => {
-  console.log("INBOX: " + 'unresolve-incident ' + data.incidentId);
-  Application.getInstance().incidents.resolve(data.incidentId, "Unresolved");
-});
-
-ipcMain.on('clear-incidents', (ev, data: any) => {
-  let incidentDb = Application.getInstance().incidents;
-  incidentDb.getIncidentResolutions().forEach((res, id) => {
-    incidentDb.resolve(id, "Deleted");
-  });
+ipcMain.on('replay-search', (ev, data: iracing.RpySrchMode) => {
+  const sdk = iracing.getInstance();
+  sdk.playbackControls.search(data)
 });
 
 ipcMain.on('replay-pause', (ev, data: any) => {
@@ -71,4 +44,41 @@ ipcMain.on('replay-live', (ev, data: any) => {
   console.log("INBOX: replay-live");
   const sdk = iracing.getInstance();
   sdk.playbackControls.search("ToEnd");
+});
+
+ipcMain.handle('send-chat-message', async (ev, data: string[]) => {
+  // focus iracing window
+  const sdk = iracing.getInstance();
+
+  await focusIRacingWindow();
+  await sleep(100);
+
+  // send messages one by one
+  for (const msg of data) {
+    sdk.execChatCmd(1);
+    await typeMessage(msg, true);
+    console.log("CHAT:", msg);
+    await sleep(1);
+  }
+  
+  // re-focus stuart
+  BrowserWindow.fromWebContents(ev.sender)?.focus();
+});
+
+ipcMain.on('replay-speed', (ev, speed: number) => {
+  // no slow motion for now;
+  speed = speed | 0;
+  if(speed > 16) speed = 16;
+  if(speed < -16) speed = -16;
+
+  const sdk = iracing.getInstance();
+  if(speed == 0) {
+    sdk.playbackControls.pause();
+  } else if (speed == 1) {
+    sdk.playbackControls.play();
+  } else if(speed > 1) {
+    sdk.playbackControls.fastForward(speed);
+  } else if(speed <= -1) {
+    sdk.playbackControls.rewind(speed * -1);
+  }
 });

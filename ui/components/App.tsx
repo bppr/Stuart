@@ -2,31 +2,90 @@ import React, { useEffect, useState } from 'react';
 import _ from 'lodash';
 
 import sdk from '../sdk';
-import Incident from './Incident';
-import CarIncidents from './Car';
+import IncidentView from './Incident';
 import Header from './Header';
-import { Incident as BackendIncident } from '../../common/incident';
-import { ReplayTime } from '../../common/index';
+import Pacing from './Pacing';
+import TelemetryViewer from './JSONViewer';
 
-import { Grid, Stack, Typography, IconButton } from "@mui/material";
+import { Incident } from '../../common/incident';
+import { ClockState } from '../../common/ClockState';
+import { PaceState } from '../../common/PaceState';
+
+import { IncidentRecord, Resolution } from '../types/Incident';
+
+import { Stack, Typography, IconButton, Tabs, Tab, Box, Collapse, Divider } from "@mui/material";
 import CloseIcon from '@mui/icons-material/CancelOutlined';
+import { TransitionGroup } from 'react-transition-group';
 
-// return a copy of array with element at index replaced by supplied element
-function replace<T>(array: T[], index: number, element: T): T[] {
-  return _.tap([...array], arr => arr.splice(index, 1, element));
+import DriverList from './DriverList';
+import { DriverState } from '../../common/DriverState';
+import { CameraState } from '../../common/CameraState';
+
+
+const INITIAL_INCIDENTS: IncidentRecord[] = [];
+const DEFAULT_CLOCK: ClockState = {
+  camCar: {
+    driverName: "unknown",
+    index: -1,
+    number: "---",
+  },
+  camSpeed: 0,
+  live: {
+    num: -1,
+    time: -1,
+  },
+  replay: {
+    num: -1,
+    time: -1,
+  }
+}
+const DEFAULT_TELEMETRY_JSON: any = {};
+const DEFAULT_PACE_STATE: PaceState = {
+  grid: [],
+  pits: [],
+  oneToGo: false,
+}
+const DEFAULT_DRIVERS: DriverState[] = [];
+const DEFAULT_CAMERA: CameraState = {
+  cameraGroups: [{
+    cameras: [{
+      name: "NONE",
+      num: -1,
+    }],
+    name: "NONE",
+    num: -1
+  }],
+  cars: [{
+    class: {
+      color: "#FFFFFF",
+      name: "NONE",
+    },
+    color: {
+      primary: "#000000",
+      secondary: "#000000",
+      tertiary: "#000000",
+    },
+    driverName: "NONE",
+    idx: -1,
+    number: "---",
+    teamName: "NONE"
+  }],
+  current: {
+    cameraGroupNum: -1,
+    cameraNum: -1,
+    carIdx: -1,
+    speed: 0,
+    isLive: true,
+  },
+  sessions: [{
+    lapLimit: -1,
+    name: "NONE",
+    num: 0,
+    timeLimt: -1,
+    type: "NONE"
+  }],
 }
 
-// use ./test-utils/TEST_INCIDENT for ui work
-const INITIAL_INCIDENTS: BackendIncident[] = [];
-const DEFAULT_CLOCK: ReplayTime = {
-  liveSessionNum: 0,
-  liveSessionTime: 0,
-  camSessionNum: 0,
-  camSessionTime: 0,
-  camCarNumber: "---",
-  camDriverName: "None",
-  camPaused: false
-}
 
 function formatTime(seconds: number) {
   seconds = Math.round(seconds);
@@ -40,116 +99,126 @@ function formatTime(seconds: number) {
     (seconds.toString().padStart(2, "0"));
 }
 
-// App - the main UI component - takes no props
-// has state for incidents and selected car - re-renders on state changes
-// listens for new incidents (listener bound on first render) - changes incident state
-// listens for click events to select car - changes selected car state
-// renders many Incidents
-// renders many IncidentCounts
+/**
+ * App is the main UI component. In addition to organizing the layout and other sub components, 
+ * it is also responsible for:
+ * - Maintaining a "database" of incidents and allowing for their resolution (see "addIncident")
+ * - setting up listeners for new incident events and state changes from the backend (see "listen")
+ * 
+ */
 export function App() {
   // any time we call a setter here, getter is updated and App re-renders 
   // any child components with changed props also re-render
   const [incidents, setIncidents] = useState(INITIAL_INCIDENTS);
   const [clock, setClock] = useState(DEFAULT_CLOCK);
+  const [telemetryJson, setTelemetryJson] = useState(DEFAULT_TELEMETRY_JSON);
+  const [paceState, setPaceState] = useState(DEFAULT_PACE_STATE);
+  const [drivers, setDrivers] = useState(DEFAULT_DRIVERS);
+  const [camera, setCamera] = useState(DEFAULT_CAMERA);
+
+  function addIncident(incident: Incident) {
+    setIncidents((prevIncidents) => {
+      const id = Math.max(0, ...(prevIncidents.map(inc => inc.id))) + 1;
+
+      let resolveIncident = (res: Resolution) => {
+        setIncidents((incs) => {
+          return incs.map((inc) => {
+            if (inc.id === id) {
+              return { ...inc, resolution: res }
+            } else {
+              return inc;
+            }
+          })
+        })
+      }
+
+      return [...prevIncidents, {
+        data: incident,
+        id: id,
+        resolution: 'Unresolved',
+        resolve: resolveIncident,
+      }]
+    });
+  }
 
   function listen() {
-    sdk.receive('incident-created', (message: BackendIncident) => {
-      console.log('incident', message);
-      
-      setIncidents((prev) => {
-        if(prev.find(({id}) => id === message.id))
-          return prev;
-
-        return [...prev, message].filter(inc => inc.resolution !== "Deleted");
-      });
-    });
-
-    sdk.receive('incident-resolved', (message: BackendIncident) => {
-      console.log("got incident resolved: " + message.id);
-
-      setIncidents((prev) => {
-        return prev.map((inc) => {
-          if (inc.id == message.id) {
-            return message;
-          } else {
-            return inc;
-          }
-        }).filter((inc) => inc.resolution !== "Deleted");
-      });
-    });
-
-    sdk.receive('clock-update', (message: ReplayTime) => setClock(message));
-    sdk.connect();
+    sdk.receive('incident-data', addIncident);
+    sdk.receive('clock-update', setClock);
+    sdk.receive('telemetry-json', setTelemetryJson);
+    sdk.receive('pace-state', setPaceState);
+    sdk.receive('drivers', setDrivers);
+    sdk.receive('camera', setCamera);
   }
 
   // clear all incidents, triggering a re-render
   function clearIncidents() {
     if (window.confirm("Are you sure? You should only do this when a session changes."))
-      sdk.clearIncidents();
+      setIncidents([]);
   }
 
   // only listen on the first render
   useEffect(listen, []);
 
   let acknowledgedIncidents = _.filter(incidents, i => i.resolution == "Acknowledged" || i.resolution == "Penalized")
-  let acknowledgedIncidentsByCarNumber = _.groupBy(acknowledgedIncidents, i => i.data.car.number);
-
-  let resolvedIncidents = incidents.filter((inc) => {
-    return inc.resolution != "Unresolved" && inc.resolution != "Deleted";
-  });
 
   let unresolvedIncidents = incidents.filter((inc) => {
     return inc.resolution == "Unresolved";
   });
 
-  const playPause = (ev: React.MouseEvent) => {
-    ev.preventDefault();
-    // sdk.camPlayToggle();
+  const [selectedTab, setSelectedTab] = useState(0);
+  const handleTabSwitch = (ev: React.SyntheticEvent, newTab: number) => {
+    setSelectedTab(newTab);
   }
 
-  const liveReplay = (ev: React.MouseEvent) => {
-    ev.preventDefault();
-    // sdk.camLive();
-  }
-
-  return <Stack spacing={4}>
-    <Header time={clock} />
-    <Grid container spacing={2}>
-      <Grid item xs={4} sx={{ minWidth: 400 }}>
-        <Stack spacing={2}>
-          <Stack direction="row" alignItems="center" justifyContent="flex-start" spacing={2}>
-            <Typography variant="h4">Incident Feed</Typography>
-            <IconButton
-              title="Clear All Incidents"
-              onClick={clearIncidents}>
-              <CloseIcon sx={{ height: 32, width: 32 }} />
-            </IconButton>
-          </Stack>
+  return <Box>
+    <Header camera={camera} />
+    <Divider />
+    <Box sx={{
+      display: "flex",
+      gap: 2
+    }}>
+      <Stack spacing={2} sx={{ width: 360 }}>
+        <Box sx={{
+          display: "flex",
+          alignItems: "center",
+        }}>
+          <Typography sx={{ flexGrow: 1 }} variant="h4">Incident Feed</Typography>
+          <IconButton
+            title="Clear All Incidents"
+            onClick={clearIncidents}>
+            <CloseIcon sx={{ height: 32, width: 32 }} />
+          </IconButton>
+        </Box>
+        <TransitionGroup>
           {
-            unresolvedIncidents.map((incident) => <Incident
-              key={incident.id}
-              incident={incident} />
+            unresolvedIncidents.map((incident) =>
+              <Collapse key={incident.id}>
+                <IncidentView
+                  incident={incident} />
+              </Collapse>
             )
           }
-        </Stack>
-      </Grid>
-      <Grid item xs={6} sx={{ minWidth: 400 }}>
-        <Stack spacing={2}>
-          <Typography variant="h4">Drivers</Typography>
-          {
-            Object.keys(acknowledgedIncidentsByCarNumber).map(num => <CarIncidents
-              key={num}
-              incidents={acknowledgedIncidentsByCarNumber[num]} />
-            )
-          }
-        </Stack>
-      </Grid>
-      {/* <Grid item xs={2}>
-        <Stack>
-          <Typography variant="h4">Pacing Order</Typography>
-          <Typography variant="h6">(coming soon)</Typography>
-        </Stack>
-      </Grid> */}
-    </Grid>
-  </Stack>
+        </TransitionGroup>
+      </Stack>
+      <Divider orientation='vertical' flexItem />
+      <Box sx={{
+        flexGrow: 1,
+      }}>
+        <Tabs value={selectedTab} onChange={handleTabSwitch}>
+          <Tab label="Drivers" />
+          <Tab label="Pacing" />
+          <Tab label="Telemetry" />
+        </Tabs>
+        <div hidden={selectedTab !== 0}> {/* Drivers */}
+          <DriverList drivers={drivers} incidents={incidents} />
+        </div>
+        <div hidden={selectedTab !== 1}> {/* Pacing */}
+          <Pacing paceOrder={paceState} />
+        </div>
+        <div hidden={selectedTab !== 2}> {/* Telemetry */}
+          <TelemetryViewer sourceJson={telemetryJson} />
+        </div>
+      </Box>
+    </Box>
+  </Box>
 }

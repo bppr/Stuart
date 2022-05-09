@@ -1,5 +1,12 @@
 declare module 'node-irsdk-2021' {
-  interface TelemetryData {
+  export type SessionFlag = "StartHidden" | "StartGo" | "StartReady" | "OneLapToGreen" | "Caution" | "CautionWaving";
+  export type CarSessionFlag = "Servicible" | "Black" | "Repair" | "Disqualify";
+  export type SessionState = "GetInCar" | "ParadeLaps" | "Racing" | "CoolDown" ;
+  export type SessionType = "Race" | "Qualifying" | "Practice" ;
+  export type SessionSubType = "Feature" | "Heat" | null;
+  export type TrackSurface = "OnTrack" | "OffTrack" | "NotInWorld" | "AproachingPits" | "InPitStall" ; // sic: "AproachingPits" is spelled wrong in the telemetry data
+
+  export interface TelemetryData {
     timestamp: Date
     values: {
       SessionNum: number
@@ -8,15 +15,34 @@ declare module 'node-irsdk-2021' {
       ReplaySessionTime: number
       ReplayPlaySpeed: number
       CamCarIdx: number
+      CamCameraNumber: number
+      CamGroupNumber: number
       CarIdxLap: number[]
       CarIdxLapDistPct: number[]
       CarIdxOnPitRoad: boolean[]
-      CarIdxTrackSurface: string
+      CarIdxPaceLine: number[]
+      CarIdxPaceRow: number[]
+      CarIdxPosition: number[]
+      CarIdxClassPosition: number[]
+      CarIdxSessionFlags: CarSessionFlag[][]
+      PaceMode: number
+      CarIdxTrackSurface: TrackSurface,
+      SessionFlags: SessionFlag[]
     }
   }
 
-  interface SessionDriver {
+  export interface SessionDriver {
     CarIdx: number
+    AbbrevName: string,
+    CarClassColor: number,
+    CarClassID: number,
+    CarClassShortName: string,
+    CarDesignStr: string,
+    CarScreenName: string,
+    CarScreenNameShort: string,
+    IRating: number,
+    UserId: number,
+    LicString: string,
     TeamName: string
     UserName: string
     CarNumber: string
@@ -24,10 +50,17 @@ declare module 'node-irsdk-2021' {
     CarIsAI: number
     CarIsPaceCar: number
     UserID: number
+    CurDriverIncidentCount: number
   }
 
-  interface SessionData {
-    SessionType: string
+  export interface SessionData {
+    SessionType: SessionType,
+    SessionSubType: SessionSubType,
+    SessionName: string,
+    SessionNum: number,
+    SessionTime: string,
+    SessionLaps: number | "unlimited",
+
     ResultsFastestLap: {
       CarIdx: number
       FastestLap: number
@@ -35,7 +68,7 @@ declare module 'node-irsdk-2021' {
     }[]
   }
 
-  interface SessionData {
+  export interface SessionData {
     timestamp: Date
     data: {
       DriverInfo: {
@@ -51,17 +84,32 @@ declare module 'node-irsdk-2021' {
       }
       SessionInfo: {
         Sessions: SessionData[]
+      },
+      CameraInfo: {
+        Groups: {
+          GroupName: string,
+          GroupNum: number,
+          Cameras: {
+            CameraName: string,
+            CameraNum: number
+          }[]
+        }[]
       }
     }
   }
 
-  type RpySrchMode = "ToStart" | "ToEnd" | "PrevSession" | "NextSession" | "PrevLap" | "NextLap" | "PrevFrame" | "NextFrame" | "PrevIncident" | "NextIncident";
-
+  export type RpySrchMode = "ToStart" | "ToEnd" | "PrevSession" | "NextSession" | "PrevLap" | "NextLap" | "PrevFrame" | "NextFrame" | "PrevIncident" | "NextIncident";
+  const ChatCommand = {
+    Macro: 0,
+    BeginChat: 1,
+    Reply: 2,
+    Cancel: 3,
+  }
   export class SDKInstance {
     on(event: string, handler: (data: any) => void)
 
     camControls: {
-      switchToCar(carNumber: string): void
+      switchToCar(carNumber: string, camGroupNum?: number, camNum?: number): void
     }
 
     playbackControls: {
@@ -70,7 +118,11 @@ declare module 'node-irsdk-2021' {
       //searchFrame(frame: number, replayPositionMode: number): void
       play(): void
       pause(): void
+      fastForward(speed: number): void,
+      rewind(speed: number): void,
     }
+
+    execChatCmd(command: number, arg?: number)
   }
 
   export function init({ sessionInfoUpdateInterval: number, telemetryUpdateInterval: number }): SDKInstance

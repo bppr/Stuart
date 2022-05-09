@@ -1,7 +1,5 @@
-// override / extend default window object
-
-import { IncidentData } from "../common/incident";
-
+import { Incident } from "../common/incident";
+import { SearchMode, WindowWithSDK} from "./types/api";
 
 // see ui/types/api.d.ts
 declare var window: WindowWithSDK
@@ -9,29 +7,23 @@ declare var window: WindowWithSDK
 const sdk = window.api;
 export default sdk;
 
+// from irsdk.d.ts
+
 function toMS(seconds: number): number {
   return (seconds * 1000) | 0
 }
 
-export function replay({ car, sessionNum, sessionTime }: IncidentData) {
-  const ms = toMS(Math.max(sessionTime - 2.0, 0));
-  window.api.replay(car.number, sessionNum, ms);
+export function replay(incident: Incident) {
+  const ms = toMS(Math.max(incident.time.time - 2.0, 0));
+  window.api.replay(incident.car.number, incident.time.num, ms);
 }
 
-export function acknowledgeIncident(id: number) {
-  window.api.acknowledgeIncident(id);
+export function replaySearch(mode: SearchMode) {
+  window.api.replaySearch(mode);
 }
 
-export function dismissIncident(id: number) {
-  window.api.dismissIncident(id);
-}
-
-export function unresolveIncident(id: number) {
-  window.api.unresolveIncident(id);
-}
-
-export function clearIncidents() {
-  window.api.clearIncidents();
+export function replaySpeed(speed: number) {
+  window.api.replaySpeed(speed);
 }
 
 export function pauseReplay() {
@@ -44,4 +36,8 @@ export function playReplay() {
 
 export function liveReplay() {
   window.api.liveReplay();
+}
+
+export function sendChatMessages(messages: string[]) : Promise<void> {
+  return window.api.sendChatMessages(messages);
 }

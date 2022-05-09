@@ -1,18 +1,20 @@
 import { join } from 'path'
 import fs from 'fs';
 
-import { BrowserWindow } from 'electron'
+import { app, BrowserWindow, ipcMain } from 'electron'
 import iracing from 'node-irsdk-2021';
 
-import Watcher, { Outbox } from './state';
-import { NotifyOfSessionChanged } from "./watchers/NotifyOfSessionChanged";
-import { IRacingIncidentCount } from "./watchers/NotifyOfIncident";
-import { OffTrackTimer } from './watchers/offtrack';
-import { MajorIncidentWatcher } from './watchers/fcy';
-import { Clock } from "./watchers/clock";
-import Application from './application';
+import { IRSDKObserver } from './state/streams';
+import incidentCount from './state/watchers/incident-count'
+import clock from './state/views/clock';
+import offTrack from './state/watchers/offtrack';
+import pacing from './state/views/pacing';
+import drivers from './state/views/drivers';
+import camera from './state/views/camera';
+
 
 import './ipc-inbox';
+import { throttleTime } from 'rxjs';
 
 function getMainFile(): string {
   const root = join(__dirname, '..');
@@ -28,6 +30,7 @@ export function start() {
   const win = new BrowserWindow({
     width: 1200,
     height: 900,
+    minWidth: 960,
     webPreferences: {
       sandbox: true,
       preload: join(__dirname, 'api-bridge.js')
@@ -42,37 +45,60 @@ export function start() {
 }
 
 function startSDK(win: BrowserWindow) {
-  const sdk = iracing.init({
-    sessionInfoUpdateInterval: 100 /* ms */,
-    telemetryUpdateInterval: 50
+  let readFromFilePath = process.env["STUART_READ_LOG"];
+  let writeToFilePath = process.env["STUART_WRITE_LOG"];
+
+  console.log("Arguments: ", process.argv);
+
+  let observer: IRSDKObserver;
+  if (readFromFilePath) {
+    observer = IRSDKObserver.fromFile(readFromFilePath);
+  } else {
+    const sdk = iracing.init({
+      sessionInfoUpdateInterval: 1000 /* ms */,
+      telemetryUpdateInterval: 250
+    });
+
+    sdk.on('Connected', () => console.log('connected to iRacing!'));
+
+    observer = IRSDKObserver.fromIRSDK(sdk);
+  }
+
+  let unsubscribe: () => void = () => {};
+
+  win.on("ready-to-show", () => {
+    unsubscribe();
+    unsubscribe = subscribeWindow(win, observer);
   });
+}
 
+function subscribeWindow(win: BrowserWindow, observer: IRSDKObserver): () => void {
+      // create and publish the incident feed
+      let incSub = observer.getEventFeed([
+        incidentCount,
+        // lapCount, // for testing
+      ], [
+        offTrack
+      ]).subscribe(incData =>
+        win.webContents.send('incident-data', incData)
+      );
+  
+      // create and publish the various state observer feeds
+      const clockSub = observer.createViewFeed(clock).subscribe(clockState => win.webContents.send('clock-update', clockState));
+      const driverSub = observer.createViewFeed(drivers).subscribe(driverStates => win.webContents.send('drivers', driverStates));
+      const pacingSub = observer.createViewFeed(pacing).subscribe(paceState => win.webContents.send('pace-state', paceState));
+      const cameraSub = observer.createViewFeed(camera).subscribe(cameraState => win.webContents.send('camera', cameraState));
+  
+      // create a telemetry feed for just the data
+      const telemSub = observer.getRawTelemetryFeed().pipe(throttleTime(2000))
+        .subscribe(data => win.webContents.send("telemetry-json", data));
 
-  let consoleOutbox: Outbox = {
-    send: (channel, data) => {
-      if(channel === 'clock-update') return;
-      console.log('O (' + channel + '): ' + JSON.stringify(data));
+    return () => {
+      incSub.unsubscribe();
+      clockSub.unsubscribe();
+      driverSub.unsubscribe();
+      pacingSub.unsubscribe();
+      cameraSub.unsubscribe();
+      telemSub.unsubscribe();
     }
-  }
-
-  Application.getInstance().addOutbox(consoleOutbox);
-
-  const incidentDb = Application.getInstance().incidents;
-  const outbox = Application.getInstance().getOutbox();
-
-  sdk.on('Connected', () => console.log('connected to iRacing!'));
-
-  const config = {
-    observers: [
-      new IRacingIncidentCount(incidentDb),
-      new NotifyOfSessionChanged(outbox),
-      new MajorIncidentWatcher(outbox, incidentDb),
-      new Clock(outbox)
-    ]
-  }
-
-  const watcher = new Watcher(config);
-
-  sdk.on('Telemetry', watcher.onTelemetryUpdate.bind(watcher));
-  sdk.on('SessionInfo', watcher.onSessionUpdate.bind(watcher));
 }
