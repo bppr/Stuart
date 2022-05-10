@@ -22,7 +22,7 @@ import TrafficLight from './TrafficLight';
  *   - current camera time
  *   - currently viewed driver
  */
-export default function Header() {
+function Header() {
 
     return <Box sx={{
         display: "flex",
@@ -49,3 +49,5 @@ export default function Header() {
 
     </Box>
 }
+
+export default React.memo(Header);

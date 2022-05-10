@@ -1,5 +1,5 @@
 import { CarSessionFlag, DriverState } from "../../common/DriverState";
-import { IncidentRecord } from "../types/Incident";
+import { IncidentRecord, Resolution } from "../types/Incident";
 import { Table, TableCell, TableRow, Paper, TableContainer, TableHead, Typography, IconButton, Avatar, Collapse, TableSortLabel, TableBody, Box, Menu, MenuItem, Backdrop, Button, FormControl, FormLabel, RadioGroup, FormControlLabel, TextField, Radio, Modal, Container, Dialog, DialogTitle, DialogActions } from "@mui/material";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
@@ -21,7 +21,7 @@ type SortColumn = "name" | "class" | "incidents" | "position" | "class-position"
  * @param props.drivers a list of all drivers in the session 
  * @param props.incidents a list of all incidents in the session
  */
-function DriverList(props: { drivers: DriverState[], incidents: IncidentRecord[] }) {
+export function DriverList(props: { drivers: DriverState[], incidents: IncidentRecord[] }) {
 
     // Display a list of drivers in an "accordion" format.
     // The header of the accordion should contain
@@ -487,11 +487,8 @@ function IncidentListItem(props: { incident: IncidentRecord, hovered?: (over: bo
     </Box>
 }
 
-export default DriverList;
-
-
 const DEFAULT_DRIVERS: DriverState[] = [];
-export function SelfBoundDriverList(props: {driverChannelName: string, incidents: IncidentRecord[]}) {
+function fSelfBoundDriverList(props: {driverChannelName: string, incidents: IncidentRecord[]}) {
     
   const [drivers, setDrivers] = useState(DEFAULT_DRIVERS);
   useEffect(() => {
@@ -500,3 +497,17 @@ export function SelfBoundDriverList(props: {driverChannelName: string, incidents
 
   return <DriverList drivers={drivers} incidents={props.incidents} />
 }
+
+const SelfBoundDriverList = React.memo(fSelfBoundDriverList, (oldProps, newProps) => {
+    if(oldProps.driverChannelName != newProps.driverChannelName) return false;
+    if(oldProps.incidents.length != newProps.incidents.length) return false;
+    const resolutionsById = new Map<number, Resolution>();
+    oldProps.incidents.forEach(inc => {
+        resolutionsById.set(inc.id, inc.resolution);
+    });
+
+    if(newProps.incidents.some((inc) => inc.resolution != resolutionsById.get(inc.id))) return false;
+
+    return true;
+});
+export default SelfBoundDriverList;

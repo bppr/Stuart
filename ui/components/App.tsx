@@ -17,7 +17,7 @@ import { Stack, Typography, IconButton, Tabs, Tab, Box, Collapse, Divider } from
 import CloseIcon from '@mui/icons-material/CancelOutlined';
 import { TransitionGroup } from 'react-transition-group';
 
-import DriverList, { SelfBoundDriverList } from './DriverList';
+import SelfBoundDriverList from './DriverList';
 import { DriverState } from '../../common/DriverState';
 import { CameraState } from '../../common/CameraState';
 
@@ -202,7 +202,7 @@ export function App() {
           <Tab label="Telemetry" />
         </Tabs>
         <div hidden={selectedTab !== 0}> {/* Drivers */}
-          <SelfBoundDriverList driverChannelName="drivers" incidents={incidents} />
+          <SelfBoundDriverList driverChannelName="drivers" incidents={acknowledgedIncidents} />
         </div>
         <div hidden={selectedTab !== 1}> {/* Pacing */}
           <Pacing paceOrder={paceState} />
