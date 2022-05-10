@@ -5,9 +5,9 @@ import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import Incident, { getIncidentEmoji } from "./Incident";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { CircularIncidentMap } from "./CircularIncidentMap";
-import { sendChatMessages } from "../sdk";
+import sdk, { sendChatMessages } from "../sdk";
 
 
 type SortColumn = "name" | "class" | "incidents" | "position" | "class-position";
@@ -488,3 +488,15 @@ function IncidentListItem(props: { incident: IncidentRecord, hovered?: (over: bo
 }
 
 export default DriverList;
+
+
+const DEFAULT_DRIVERS: DriverState[] = [];
+export function SelfBoundDriverList(props: {driverChannelName: string, incidents: IncidentRecord[]}) {
+    
+  const [drivers, setDrivers] = useState(DEFAULT_DRIVERS);
+  useEffect(() => {
+      return sdk.receive(props.driverChannelName, setDrivers);
+  }, [props.driverChannelName, setDrivers]);
+
+  return <DriverList drivers={drivers} incidents={props.incidents} />
+}

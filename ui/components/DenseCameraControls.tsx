@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { Avatar, Box, Fab, FormControl, InputLabel, MenuItem, Select, Typography } from "@mui/material";
 import { CameraState } from "../../common/CameraState";
@@ -155,89 +155,57 @@ export default function CameraControls(props: { camState: CameraState }) {
             </FormControl>
         </Box>
     </Box>
-    {/* </Box>
-    return <Box sx={{ display: "flex", flexDirection: "column", width: "800px", gap: 2 }}>
-        <Box sx={{ display: "flex", justifyContent: "space-around", alignItems: "center", gap: 2 }}>
-            <Fab size="small" variant="extended"
-                onClick={() => sdk.replaySearch("PrevSession")}>
-                <ChevronLeftIcon />
-                Session
-            </Fab>
-            <Fab size="small" variant="extended"
-                onClick={() => sdk.replaySearch("PrevLap")}>
-                <ChevronLeftIcon />
-                Lap
-            </Fab>
-            <Fab size="medium" onClick={rewind}
-                disabled={props.camState.current.speed <= -16}>
-                <FastRewindIcon />
-            </Fab>
-            <Fab size="large"
-                onClick={() => {
-                    if (isPaused) {
-                        sdk.playReplay();
-                    } else {
-                        sdk.pauseReplay();
-                    }
-                }}>
-                {
-                    isPaused ? <PlayArrowIcon /> : <PauseIcon />
-                }
-            </Fab>
-            <Fab size="medium" onClick={fastForward} disabled={props.camState.current.speed >= 16}>
-                <FastForwardIcon />
-            </Fab>
-            <Fab size="medium" variant="extended"
-                onClick={() => sdk.replaySearch("ToEnd")}
-            >
-                Live
-                <GoToLiveIcon />
-            </Fab>
-            <Fab size="small" variant="extended" onClick={() => sdk.replaySearch("NextLap")}>
-                Lap
-                <ChevronRightIcon />
-            </Fab>
-            <Fab size="small" variant="extended" onClick={() => sdk.replaySearch("NextSession")}>
-                Session
-                <ChevronRightIcon />
-            </Fab>
-        </Box>
-        <Box sx={{ display: "flex", justifyContent: "space-around" }}>
-            <FormControl sx={{ height: 45 }}>
-                <InputLabel>Car</InputLabel>
-                <Select value={camCar?.number} sx={{ width: "320px", height: "100%" }} label="Car" size="small" onChange={(ev) => {
-                    sdk.focusCamera(ev.target.value, props.camState.current.cameraGroupNum);
-                }}>
-                    {
-                        sortedCars.map((car) => <MenuItem value={car.number} key={car.idx}>
-                            <Box sx={{
-                                display: "flex",
-                                flexWrap: "nowrap",
-                                gap: 1,
-                                alignItems: "center"
-                            }}>
-                                <Avatar sx={{ width: 24, height: 24, fontSize: 12, bgcolor: car.class.color, color: "black" }} variant="rounded">
-                                    {car.number}
-                                </Avatar>
-                                <Typography noWrap variant="subtitle1" sx={{ flexGrow: 1 }}>{car.driverName}</Typography>
-                            </Box>
-                        </MenuItem>)
-                    }
-                </Select>
-            </FormControl>
-            <FormControl sx={{ height: 45 }}>
-                <InputLabel>Camera</InputLabel>
-                <Select value={props.camState.current.cameraGroupNum} sx={{ width: "320px", height: "100%" }} label="Camera" size="small"
-                    onChange={(ev) => {
-                        const camGroup = parseInt("" + ev.target.value);
-                        if (camCar) {
-                            sdk.focusCamera(camCar.number, camGroup);
-                        }
-                    }}>
-                    {
-                        props.camState.cameraGroups.map((group) => <MenuItem value={group.num} key={group.num}>{group.name}</MenuItem>)
-                    }
-                </Select></FormControl>
-        </Box>
-    </Box> */}
+}
+
+
+const DEFAULT_CAMERA: CameraState = {
+    cameraGroups: [{
+      cameras: [{
+        name: "NONE",
+        num: -1,
+      }],
+      name: "NONE",
+      num: -1
+    }],
+    cars: [{
+      class: {
+        color: "#FFFFFF",
+        name: "NONE",
+      },
+      color: {
+        primary: "#000000",
+        secondary: "#000000",
+        tertiary: "#000000",
+      },
+      driverName: "NONE",
+      idx: -1,
+      number: "---",
+      teamName: "NONE"
+    }],
+    current: {
+      cameraGroupNum: -1,
+      cameraNum: -1,
+      carIdx: -1,
+      speed: 0,
+      isLive: true,
+    },
+    sessions: [{
+      lapLimit: -1,
+      name: "NONE",
+      num: 0,
+      timeLimt: -1,
+      type: "NONE"
+    }],
+  }
+
+export function SelfBoundCameraControls(props: {
+    channelName: string
+}) {
+    const [camera, setCamera] = useState(DEFAULT_CAMERA);
+
+    useEffect(() => {
+       return sdk.receive(props.channelName, setCamera);
+    }, [setCamera, props.channelName]);
+
+    return <CameraControls camState={camera} />
 }

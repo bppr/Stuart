@@ -4,7 +4,8 @@ import { Typography, Box, Fab, Tooltip } from '@mui/material';
 
 import { CameraState } from '../../common/CameraState';
 import { Flag } from '@mui/icons-material';
-import DenseCameraControls from './DenseCameraControls';
+import DenseCameraControls, { SelfBoundCameraControls } from './DenseCameraControls';
+import TrafficLight from './TrafficLight';
 
 /**
  * Header shows information about the session as a whole and allows for some control over the camera and session state.
@@ -21,19 +22,17 @@ import DenseCameraControls from './DenseCameraControls';
  *   - current camera time
  *   - currently viewed driver
  */
-export default function Header(props: {
-    camera: CameraState,
-}) {
+export default function Header() {
 
     return <Box sx={{
         display: "flex",
-        justifyContent: "flex-start",
         alignItems: "center",
-        gap: 2
+        gap: 2,
+        height: "100px"
     }} >
-        <Typography variant="h3">👮 Stuart</Typography>
+           <Typography variant="h3">👮 Stuart</Typography>
 
-        <DenseCameraControls camState={props.camera} />
+        <SelfBoundCameraControls channelName='camera' />
         <Box sx={{ flexGrow: 1 }} />
         <Tooltip title="Throw Yellow">
             <Fab size='large' sx={{
